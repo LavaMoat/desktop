@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use std::net::SocketAddr;
 use tokio::sync::oneshot;
-use log::{info, warn, error};
+use log::{warn, error};
 
 use metamask::*;
 
@@ -69,8 +69,6 @@ async fn run() -> Result<()> {
             Ok(_) => {},
             Err(e) => print_error(e),
         }
-        println!("After error case!");
-        loop {}
     });
 
     match rx.await {
@@ -95,7 +93,6 @@ async fn run() -> Result<()> {
 async fn main() {
     std::env::set_var("RUST_LOG", "info");
     pretty_env_logger::init();
-
     match run().await {
         Ok(_) => {},
         Err(e) => print_error(e),

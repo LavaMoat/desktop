@@ -3,6 +3,7 @@ use wry::{
         event::{Event, StartCause, WindowEvent},
         event_loop::{ControlFlow, EventLoop},
         window::WindowBuilder,
+        menu::{MenuBar, MenuItem},
     },
     webview::WebViewBuilder,
 };
@@ -12,9 +13,20 @@ pub fn window<S: AsRef<str>, T: AsRef<str>>(
     title: T,
 ) -> wry::Result<()> {
     let event_loop = EventLoop::new();
+
+    let mut menu_bar = MenuBar::new();
+    let mut win_bar = MenuBar::new();
+
+    win_bar.add_native_item(MenuItem::About("".to_string()));
+    win_bar.add_native_item(MenuItem::EnterFullScreen);
+    win_bar.add_native_item(MenuItem::Quit);
+    menu_bar.add_submenu("Main", true, win_bar);
+
     let window = WindowBuilder::new()
         .with_title(title.as_ref())
+        .with_menu(menu_bar)
         .build(&event_loop)?;
+
     let _webview = WebViewBuilder::new(window)?
         .with_url(url.as_ref())?
         .build()?;
