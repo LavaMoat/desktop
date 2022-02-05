@@ -1,0 +1,33 @@
+[package]
+name = "metamask"
+version = "0.1.0"
+edition = "2021"
+description = "MetaMask wallet for the desktop"
+default-run = "metamask"
+
+[dependencies]
+anyhow = "1"
+wry = "0.12"
+rust-embed = "6.3"
+actix-web = "4.0.0-rc.2"
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+mime_guess = "2"
+mime = "0.3"
+clap = { version = "3", features = ["derive"] }
+ctrlc = { version = "3", features = ["termination"] }
+log = "0.4"
+pretty_env_logger = "0.4"
+
+[package.metadata.bundle]
+name = "MetaMask"
+identifier = "io.metamask.wallet"
+#icon = ["32x32.png", "128x128.png", "128x128@2x.png"]
+version = "1.0.0"
+#resources = ["assets", "images/**/*.png", "secrets/public_key.txt"]
+copyright = "Copyright (c) Consensys 2022. All rights reserved."
+#category = "Web3"
+short_description = "Crypto Wallet"
+long_description = """
+A crypto wallet and gateway to blockchain applications.
+"""
