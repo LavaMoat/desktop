@@ -21,8 +21,8 @@ pretty_env_logger = "0.4"
 
 [package.metadata.bundle]
 name = "MetaMask"
-identifier = "io.metamask.wallet"
-#icon = ["32x32.png", "128x128.png", "128x128@2x.png"]
+#dentifier = "io.metamask.wallet"
+icon = ["icon/32x32.png", "icon/128x128.png", "icon/128x128@2x.png"]
 version = "1.0.0"
 #resources = ["assets", "images/**/*.png", "secrets/public_key.txt"]
 copyright = "Copyright (c) Consensys 2022. All rights reserved."
