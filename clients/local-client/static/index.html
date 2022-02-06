@@ -1,0 +1,156 @@
+<html>
+    <head>
+        <style>
+            body {
+                font-family: Verdana, Geneva, sans-serif;
+            }
+        </style>
+    </head>
+    <body>
+        <section>
+            <ul id="status">
+                <li>No Code yet</li>
+            </ul>
+        </section>
+        <script>
+            const oauthConfig = {
+                authorization_endpoint: 'http://localhost:7777/oauth/authorize',
+                client_id: 'LocalClient',
+                redirect_uri: 'http://localhost:7778/',
+                requested_scopes: 'default-scope',
+                token_endpoint: 'http://localhost:7777/oauth/token',
+                resource_endpoint: 'http://localhost:7777/rpc'
+            };
+
+            function generateRandomString() {
+                // const array = new Uint32Array(28);
+                // window.crypto.getRandomValues(array);
+                // return Array.from(array, dec => ('0' + dec.toString(16)).substr(-2)).join('');
+                const array = new Uint8Array(32);
+                window.crypto.getRandomValues(array);
+                return array;
+            }
+
+            function sha256(plain) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(plain);
+                return window.crypto.subtle.digest('SHA-256', data);
+            }
+
+            function base64urlencode(str) {
+                return btoa(String.fromCharCode(...new Uint8Array(str)))
+                    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            }
+
+            async function pkceChallengeFromVerifier(v) {
+                const hashed = await sha256(v);
+                return base64urlencode(hashed);
+            }
+
+            async function getAuthUrl(config) {
+                // Create and store a random "state" value
+                let state = generateRandomString();
+                state = base64urlencode(state);
+                localStorage.setItem("pkce_state", state);
+
+                // Create and store a new PKCE code_verifier (the plaintext random secret)
+                const spec_code_verifier_source = generateRandomString();
+                // const spec_code_verifier_source = new Uint8Array([116, 24, 223, 180, 151, 153, 224, 37, 79, 250, 96, 125, 216, 173, 187, 186, 22, 212, 37, 77, 105, 214, 191, 240, 91, 88, 5, 88, 83, 132, 141, 121]);
+                code_verifier = base64urlencode(spec_code_verifier_source);
+                localStorage.setItem("pkce_code_verifier", code_verifier);
+                console.log(`Verifier: ${code_verifier}`);
+
+                // Hash and base64-urlencode the secret to use as the challenge
+                const code_challenge = await pkceChallengeFromVerifier(code_verifier);
+
+                // Build the authorization URL
+                return config.authorization_endpoint
+                    + "?response_type=code"
+                    + "&client_id=" + encodeURIComponent(config.client_id)
+                    + "&state=" + encodeURIComponent(state)
+                    + "&scope=" + encodeURIComponent(config.requested_scopes)
+                    + "&redirect_uri=" + encodeURIComponent(config.redirect_uri)
+                    + "&code_challenge=" + encodeURIComponent(code_challenge)
+                    + "&code_challenge_method=S256";
+            }
+
+            function parseQueryString(string) {
+                if (string == "") { return {}; }
+                const segments = string.split("&").map(s => s.split("="));
+                const queryString = {};
+                segments.forEach(s => queryString[s[0]] = s[1]);
+                return queryString;
+            }
+
+            function getCode() {
+                const q = parseQueryString(window.location.search.substring(1));
+
+                if (q.error) {
+                    q.error = decodeURIComponent(q.error);
+                    document.getElementById("status").insertAdjacentHTML("beforeend",`<li>Got error ${q.error}</li>`);
+                }
+
+                if (q.code) {
+
+                    if (localStorage.getItem("pkce_state") != q.state) {
+                        document.getElementById("status").insertAdjacentHTML("beforeend",`<li>Got code ${q.code}, but (pkce_)state is not what was expected. Expected ${localStorage.getItem("pkce_state")}, got ${q.state}</li>`);
+                    } else {
+                        localStorage.removeItem("pkce_state");
+                        document.getElementById("status").insertAdjacentHTML("beforeend",`<li>Got code ${q.code} and pkce matches</li>`);
+                        return q.code;
+                    }
+
+                    localStorage.removeItem("pkce_state");
+                    localStorage.removeItem("pkce_code_verifier");
+                }
+
+                return undefined;
+            }
+
+            const code = getCode();
+
+            if (code) {
+                const params = {
+                    grant_type: "authorization_code",
+                    code,
+                    client_id: oauthConfig.client_id,
+                    redirect_uri: oauthConfig.redirect_uri,
+                    code_verifier: localStorage.getItem("pkce_code_verifier") || ''
+                };
+                
+                document.getElementById("status").insertAdjacentHTML("beforeend", `<li>Trying to fetch access token with valid verifier</li>`);
+                fetch(oauthConfig.token_endpoint, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    method: "POST",
+                    body: Object.keys(params).map(key => key + '=' + params[key]).join('&')
+                })
+                .then(r => r.json())
+                .then((t) => {
+                    if (t.error) {
+                        document.getElementById("status").insertAdjacentHTML("beforeend", `<li>Got error while fetching access token: ${t.error}</li>`);
+                    }
+
+                    if (t.access_token)
+                    {         
+                        // Got valid access token
+                        document.getElementById("status").insertAdjacentHTML("beforeend",`<li>Got access token ${t.access_token}</li>`);
+                        localStorage.removeItem("pkce_code_verifier");
+
+                        window.history.replaceState({}, window.document.title, "/");
+
+                        fetch(oauthConfig.resource_endpoint, {
+                            headers: { 'Authorization': `Bearer ${t.access_token}` },
+                        })
+                        .then(r => r.text())
+                        .then(r => {
+                            document.getElementById("status").insertAdjacentHTML("beforeend", `<li>Got some resource ${r}</li>`);
+                        })
+                    }
+                });
+            } else {
+                document.getElementById("status").insertAdjacentHTML("beforeend",`<li>No code yet, redirecting for auth</li>`);
+                getAuthUrl(oauthConfig).then(u => window.location.href = u);
+            }
+        </script>
+    </body>
+</html>

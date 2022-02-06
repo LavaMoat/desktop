@@ -686,9 +686,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.8.6"
+version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfcae03edb34f947e64acdb1c33ec169824e20657e9ecb61cef6c8c74dcb8120"
+checksum = "b5e5bed1f1c269533fa816a0a5492b3545209a205ca1a54842be180eb63a16a6"
 dependencies = [
  "cfg-if 1.0.0",
  "lazy_static",
@@ -1745,7 +1745,7 @@ dependencies = [
 [[package]]
 name = "oxide-auth"
 version = "0.5.1"
-source = "git+https://github.com/tmpfs/oxide-auth?branch=actix-4.x#9d3734f1898dbe79cbe3cc75cbdf16253a53239e"
+source = "git+https://github.com/tmpfs/oxide-auth?branch=actix-4.x#7e1b8563bce664a578fdedb2e9ebf90b16d8ee8e"
 dependencies = [
  "base64",
  "chrono",
@@ -1765,7 +1765,7 @@ dependencies = [
 [[package]]
 name = "oxide-auth-actix"
 version = "0.1.0"
-source = "git+https://github.com/tmpfs/oxide-auth?branch=actix-4.x#9d3734f1898dbe79cbe3cc75cbdf16253a53239e"
+source = "git+https://github.com/tmpfs/oxide-auth?branch=actix-4.x#7e1b8563bce664a578fdedb2e9ebf90b16d8ee8e"
 dependencies = [
  "actix",
  "actix-web",

@@ -19,7 +19,7 @@ pub async fn server<A: ToSocketAddrs>(
         App::new()
             .app_data(Data::new(pkce_agent.clone()))
             .service(
-                web::scope("/oauth/")
+                web::scope("/oauth")
                     .service(
                         web::resource("/authorize")
                             .route(web::get().to(oauth::get_authorize))

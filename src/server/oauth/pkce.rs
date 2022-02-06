@@ -38,7 +38,7 @@ impl PkceSetup {
         let scope: Scope = "default-scope".parse().unwrap();
         let client = Client::public(
             "LocalClient",
-            "http://localhost:8081/".parse::<url::Url>().unwrap().into(),
+            "http://localhost:7778/".parse::<url::Url>().unwrap().into(),
             scope.clone(),
         );
 
