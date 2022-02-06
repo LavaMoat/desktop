@@ -75,7 +75,7 @@ async fn run() -> Result<()> {
         Ok(_addr) => {
             if !args.headless {
                 // Window must be opened on the main thread
-                window(url, title)?;
+                window(url, title).await?;
             } else {
                 let _ = server_handle.join();
             }

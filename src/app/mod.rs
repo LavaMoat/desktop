@@ -8,16 +8,41 @@ use wry::{
     webview::WebViewBuilder,
 };
 
+use std::sync::mpsc::channel;
+
 //use log::debug;
 
 mod ipc;
 
-pub fn window<S: AsRef<str>, T: AsRef<str>>(
+pub async fn window<S: AsRef<str>, T: AsRef<str>>(
     url: S,
     title: T,
 ) -> wry::Result<()> {
     let event_loop = EventLoop::<String>::with_user_event();
     let event_proxy = event_loop.create_proxy();
+
+    let (tx, mut rx) = channel::<String>();
+
+    // Spawn a worker thread to execute IPC messages
+    // and pass them back to the webview via the event proxy
+    // when the JSON-RPC evaluation determines a reply is required.
+    std::thread::spawn(move || {
+        let runtime = tokio::runtime::Runtime::new()
+            .expect("could not create tokio runtime");
+        runtime.block_on(async {
+            while let Ok(message) = rx.recv() {
+                let response =
+                    ipc::handle(&message).await?;
+                if let Some(reply) = &response {
+                    let response = serde_json::to_string(reply)?;
+                    let script = format!("window.postMessage('{}')", response);
+                    event_proxy.send_event(script)?;
+                }
+            }
+            Ok::<(), anyhow::Error>(())
+        })
+        .expect("failed to execute IPC bridge runtime");
+    });
 
     let mut menu_bar = MenuBar::new();
     let mut win_bar = MenuBar::new();
@@ -35,17 +60,8 @@ pub fn window<S: AsRef<str>, T: AsRef<str>>(
     let webview = WebViewBuilder::new(window)?
         .with_url(url.as_ref())?
         .with_ipc_handler(move |_, message| {
-            //debug!("{}", message);
-            let response =
-                ipc::handle(&message).expect("failed to handle IPC message");
-            if let Some(reply) = &response {
-                let response = serde_json::to_string(reply)
-                    .expect("failed to encode response as JSON");
-                let script = format!("window.postMessage('{}')", response);
-                event_proxy
-                    .send_event(script)
-                    .expect("failed to send script to event loop proxy");
-            }
+            tx.send(message)
+                .expect("failed to send IPC message to async thread (bridge)");
         })
         .build()?;
 

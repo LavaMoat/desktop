@@ -7,7 +7,6 @@ export default class RpcProxy {
     this._ipc = window.ipc;
     window.addEventListener("message", (event) => {
       const {data} = event;
-      dbg(data);
       const response = JSON.parse(data);
       const resolver = this._requests.get(response.id);
       if (resolver) {

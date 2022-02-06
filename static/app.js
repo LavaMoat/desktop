@@ -17,7 +17,8 @@ class App {
   }
 
   async start() {
-    await this.rpc.call("hello", "world");
+    const result = await this.rpc.call("hello", "world");
+    dbg(result);
   }
 }
 
