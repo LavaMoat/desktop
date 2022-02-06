@@ -8,11 +8,16 @@ use wry::{
     webview::WebViewBuilder,
 };
 
+//use log::debug;
+
+mod ipc;
+
 pub fn window<S: AsRef<str>, T: AsRef<str>>(
     url: S,
     title: T,
 ) -> wry::Result<()> {
-    let event_loop = EventLoop::new();
+    let event_loop = EventLoop::<String>::with_user_event();
+    let event_proxy = event_loop.create_proxy();
 
     let mut menu_bar = MenuBar::new();
     let mut win_bar = MenuBar::new();
@@ -27,8 +32,21 @@ pub fn window<S: AsRef<str>, T: AsRef<str>>(
         .with_menu(menu_bar)
         .build(&event_loop)?;
 
-    let _webview = WebViewBuilder::new(window)?
+    let webview = WebViewBuilder::new(window)?
         .with_url(url.as_ref())?
+        .with_ipc_handler(move |_, message| {
+            //debug!("{}", message);
+            let response =
+                ipc::handle(&message).expect("failed to handle IPC message");
+            if let Some(reply) = &response {
+                let response = serde_json::to_string(reply)
+                    .expect("failed to encode response as JSON");
+                let script = format!("window.postMessage('{}')", response);
+                event_proxy
+                    .send_event(script)
+                    .expect("failed to send script to event loop proxy");
+            }
+        })
         .build()?;
 
     event_loop.run(move |event, _, control_flow| {
@@ -37,6 +55,12 @@ pub fn window<S: AsRef<str>, T: AsRef<str>>(
         match event {
             Event::NewEvents(StartCause::Init) => {
                 //println!("Window is ready!")
+            }
+            Event::UserEvent(script) => {
+                //debug!("{}", script);
+                webview
+                    .evaluate_script(&script)
+                    .expect("failed to evaluate script in webview");
             }
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,

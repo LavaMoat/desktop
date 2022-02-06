@@ -1,5 +1,10 @@
 use actix::Actor;
-use actix_web::{web::{self, Data}, App, HttpServer};
+use actix_cors::Cors;
+use actix_web::{
+    http,
+    web::{self, Data},
+    App, HttpServer,
+};
 use anyhow::Result;
 use std::net::{SocketAddr, ToSocketAddrs};
 use tokio::sync::oneshot;
@@ -16,8 +21,23 @@ pub async fn server<A: ToSocketAddrs>(
     let pkce_agent = oauth::PkceSetup::new().start();
 
     let server = HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:7777")
+            .allowed_origin("http://localhost:7778")
+            //.allowed_origin_fn(|origin, _req_head| {
+            //origin.as_bytes().ends_with(b".rust-lang.org")
+            //})
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![
+                http::header::AUTHORIZATION,
+                http::header::ACCEPT,
+            ])
+            .allowed_header(http::header::CONTENT_TYPE)
+            .max_age(3600);
+
         App::new()
             .app_data(Data::new(pkce_agent.clone()))
+            .wrap(cors)
             .service(
                 web::scope("/oauth")
                     .service(
@@ -28,10 +48,7 @@ pub async fn server<A: ToSocketAddrs>(
                     .route("/token", web::post().to(oauth::post_token))
                     .route("/refresh", web::post().to(oauth::post_refresh)),
             )
-            .service(
-                web::resource("/rpc")
-                    .route(web::post().to(rpc::handler)),
-            )
+            .service(web::resource("/rpc").route(web::post().to(rpc::handler)))
             .service(
                 web::resource("/{tail:.*}")
                     .route(web::get().to(assets::handler)),

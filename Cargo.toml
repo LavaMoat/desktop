@@ -7,7 +7,7 @@ default-run = "metamask"
 
 [dependencies]
 anyhow = "1"
-wry = "0.12"
+wry = "0.13"
 rust-embed = "6.3"
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
@@ -19,7 +19,10 @@ log = "0.4"
 pretty_env_logger = "0.4"
 actix = { version = "0.12", default-features = false }
 actix-web = "4.0.0-rc.2"
+actix-cors = "0.6.0-beta.8"
 url = "2"
+json-rpc2 = "0.11"
+serde_json = "1"
 
 [dependencies.oxide-auth]
 version = "0.5.1"
