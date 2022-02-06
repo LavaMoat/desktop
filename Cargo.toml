@@ -18,15 +18,26 @@ clap = { version = "3", features = ["derive"] }
 ctrlc = { version = "3", features = ["termination"] }
 log = "0.4"
 pretty_env_logger = "0.4"
+actix = { version = "0.12", default-features = false }
+url = "2"
+
+[dependencies.oxide-auth]
+version = "0.5.1"
+branch = "actix-4.x"
+git = "https://github.com/tmpfs/oxide-auth"
+
+[dependencies.oxide-auth-actix]
+version = "0.1.0"
+branch = "actix-4.x"
+git = "https://github.com/tmpfs/oxide-auth"
 
 [package.metadata.bundle]
 name = "MetaMask"
-#dentifier = "io.metamask.wallet"
+identifier = "io.metamask.wallet"
 icon = ["icon/32x32.png", "icon/128x128.png", "icon/128x128@2x.png"]
 version = "1.0.0"
 #resources = ["assets", "images/**/*.png", "secrets/public_key.txt"]
 copyright = "Copyright (c) Consensys 2022. All rights reserved."
-#category = "Web3"
 short_description = "Crypto Wallet"
 long_description = """
 A crypto wallet and gateway to blockchain applications.

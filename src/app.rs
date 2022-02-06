@@ -2,8 +2,8 @@ use wry::{
     application::{
         event::{Event, StartCause, WindowEvent},
         event_loop::{ControlFlow, EventLoop},
-        window::WindowBuilder,
         menu::{MenuBar, MenuItem},
+        window::WindowBuilder,
     },
     webview::WebViewBuilder,
 };
@@ -37,7 +37,7 @@ pub fn window<S: AsRef<str>, T: AsRef<str>>(
         match event {
             Event::NewEvents(StartCause::Init) => {
                 //println!("Window is ready!")
-            },
+            }
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 ..

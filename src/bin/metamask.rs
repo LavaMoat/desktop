@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::Parser;
+use log::{error, warn};
 use std::net::SocketAddr;
 use tokio::sync::oneshot;
-use log::{warn, error};
 
 use metamask::*;
 
@@ -15,18 +15,20 @@ struct Cli {
     headless: bool,
 
     /// Bind address for the server.
-    #[clap(short, long, default_value="0.0.0.0:7777")]
+    #[clap(short, long, default_value = "0.0.0.0:7777")]
     address: SocketAddr,
 
     /// URL for the window.
-    #[clap(short, long, default_value="http://localhost:7777")]
+    #[clap(short, long, default_value = "http://localhost:7777")]
     url: String,
 }
 
 fn print_error(e: anyhow::Error) {
     if let Some(e) = e.downcast_ref::<std::io::Error>() {
         if let std::io::ErrorKind::AddrInUse = e.kind() {
-            warn!("Could not start the server because the address is being used!");
+            warn!(
+                "Could not start the server because the address is being used!"
+            );
             warn!("This happens when a server is already running on a port,");
             warn!("which can happen if metamask is already running.");
             warn!("");
@@ -64,11 +66,9 @@ async fn run() -> Result<()> {
 
     // Web server must be spawned on a separate thread
     // as we need the main thread for the UI window
-    let server_handle = std::thread::spawn(move || {
-        match server(addr, tx) {
-            Ok(_) => {},
-            Err(e) => print_error(e),
-        }
+    let server_handle = std::thread::spawn(move || match server(addr, tx) {
+        Ok(_) => {}
+        Err(e) => print_error(e),
     });
 
     match rx.await {
@@ -83,8 +83,8 @@ async fn run() -> Result<()> {
         Err(_) => {} /* Ignore channel closed error */
     }
 
-    // Must loop so that stderr can be flushed otherwise 
-    // the program can exit before error messages have 
+    // Must loop so that stderr can be flushed otherwise
+    // the program can exit before error messages have
     // finished printing
     loop {}
 }
@@ -94,7 +94,7 @@ async fn main() {
     std::env::set_var("RUST_LOG", "info");
     pretty_env_logger::init();
     match run().await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => print_error(e),
     }
 }
