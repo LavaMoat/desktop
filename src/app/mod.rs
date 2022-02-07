@@ -36,7 +36,7 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
                     if let Some(reply) = &response {
                         let response = serde_json::to_string(reply)?;
                         let script =
-                            format!("window.postMessage('{}')", response);
+                            format!("window.postMessage({})", response);
                         event_proxy.send_event(script)?;
                     }
                 }

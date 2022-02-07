@@ -16,6 +16,10 @@ class App {
     this.ipc = new RpcProxy();
   }
 
+  importFile() {
+
+  }
+
   async start() {
     const listAccounts = document.getElementById("list-accounts");
     const accountsList = document.querySelector(".accounts");
