@@ -2506,6 +2506,7 @@ dependencies = [
  "oxide-auth-actix",
  "pretty_env_logger",
  "rand 0.8.4",
+ "reqwest",
  "rust-embed",
  "serde",
  "serde_json",

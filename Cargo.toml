@@ -34,6 +34,7 @@ home = "0.5.3"
 bip39 = { version = "1", features = ["rand"] }
 rand = "0.8.4"
 eth-keystore = "0.3"
+reqwest = "0.11"
 
 [dependencies.oxide-auth]
 version = "0.5.1"

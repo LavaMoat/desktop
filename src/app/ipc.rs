@@ -1,8 +1,6 @@
+use crate::user::USER_DATA;
 use async_trait::async_trait;
 use json_rpc2::{from_str, futures::*, Request, Response, Result};
-use serde_json::Value;
-
-use crate::user::USER_DATA;
 
 struct IpcService;
 
