@@ -21,7 +21,7 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
     let event_loop = EventLoop::<String>::with_user_event();
     let event_proxy = event_loop.create_proxy();
 
-    let (tx, mut rx) = channel::<String>();
+    let (tx, rx) = channel::<String>();
 
     // Spawn a worker thread to execute IPC messages
     // and pass them back to the webview via the event proxy
@@ -29,19 +29,20 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
     std::thread::spawn(move || {
         let runtime = tokio::runtime::Runtime::new()
             .expect("could not create tokio runtime");
-        runtime.block_on(async {
-            while let Ok(message) = rx.recv() {
-                let response =
-                    ipc::handle(&message).await?;
-                if let Some(reply) = &response {
-                    let response = serde_json::to_string(reply)?;
-                    let script = format!("window.postMessage('{}')", response);
-                    event_proxy.send_event(script)?;
+        runtime
+            .block_on(async {
+                while let Ok(message) = rx.recv() {
+                    let response = ipc::handle(&message).await?;
+                    if let Some(reply) = &response {
+                        let response = serde_json::to_string(reply)?;
+                        let script =
+                            format!("window.postMessage('{}')", response);
+                        event_proxy.send_event(script)?;
+                    }
                 }
-            }
-            Ok::<(), anyhow::Error>(())
-        })
-        .expect("failed to execute IPC bridge runtime");
+                Ok::<(), anyhow::Error>(())
+            })
+            .expect("failed to execute IPC bridge runtime");
     });
 
     let mut menu_bar = MenuBar::new();

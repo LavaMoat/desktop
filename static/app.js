@@ -17,8 +17,11 @@ class App {
   }
 
   async start() {
-    const result = await this.rpc.call("hello", "world");
-    dbg(result);
+    const address = await this.rpc.call("Account.create");
+    dbg(address);
+
+    const accounts = await this.rpc.call("Account.list");
+    dbg(JSON.stringify(accounts));
   }
 }
 
