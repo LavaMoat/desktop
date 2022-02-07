@@ -17,35 +17,32 @@ class App {
   }
 
   async start() {
-    //const accounts = await this.ipc.call("Account.list");
-    //dbg(JSON.stringify(accounts));
+    const listAccounts = document.getElementById("list-accounts");
+    const accountsList = document.querySelector(".accounts");
+
+    listAccounts.addEventListener('click', async () => {
+      const accounts = await this.ipc.call("Account.list");
+      accountsList.innerText = JSON.stringify(accounts, undefined, 2);
+    });
 
     const exists = await this.ipc.call("Account.exists");
     if (!exists) {
-      dbg("No account yet...");
       const signup = document.getElementById("signup");
       signup.addEventListener('click', async () => {
         debug("Signing up account...");
-        const {address, mnemonic} = await this.ipc.call("Account.signup", "mock password");
+        const {address, mnemonic} = await this.ipc.call(
+          "Account.signup", "mock password");
         debug("Account address " + address);
         debug("Signed up with " + mnemonic);
       });
     } else {
-      debug("Do login...");
+      const login = document.getElementById("login");
+      login.addEventListener('click', async () => {
+        const passphrase = document.getElementById("passphrase").value;
+        const {address} = await this.ipc.call("Account.login", passphrase);
+        debug("Logged in to account: " + address);
+      });
     }
-
-    /*
-    const login = document.getElementById("login");
-    login.addEventListener('click', async () => {
-      const passphrase = document.getElementById("passphrase").value;
-      debug("Decrypting wallet..." + passphrase);
-      const result = await this.ipc.call("Account.login", passphrase);
-    });
-    */
-
-    //const address = await this.ipc.call("Account.create");
-    //dbg(address);
-
   }
 }
 

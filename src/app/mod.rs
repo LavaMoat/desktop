@@ -50,6 +50,7 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
 
     win_bar.add_native_item(MenuItem::About("".to_string()));
     win_bar.add_native_item(MenuItem::EnterFullScreen);
+    win_bar.add_native_item(MenuItem::CloseWindow);
     win_bar.add_native_item(MenuItem::Quit);
     menu_bar.add_submenu("Main", true, win_bar);
 

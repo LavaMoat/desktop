@@ -23,13 +23,16 @@ pub mod bip39 {
     }
 
     /// Generate bip39 passphrase words in the given language.
-    pub fn words_in(language: Language, word_count: WordCount) -> Result<String> {
+    pub fn words_in(
+        language: Language,
+        word_count: WordCount,
+    ) -> Result<String> {
         Ok(format!("{}", mnemonic_in(language, word_count)?))
     }
 
     /// Generate bip39 passphrase words in English.
     pub fn words(word_count: WordCount) -> Result<String> {
-        Ok(format!("{}", mnemonic_in(Language::English, word_count)?))
+        words_in(Language::English, word_count)
     }
 
     /// Variants for the number of words supported by
