@@ -12,7 +12,7 @@ export default class RpcProxy {
       if (resolver) {
         if (response.error) {
           resolver.reject(new Error(response.error.message));
-        } else if (response.result) {
+        } else if (response.result !== undefined) {
           resolver.resolve(response.result);
         }
       }

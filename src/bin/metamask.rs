@@ -42,7 +42,10 @@ fn print_error(e: anyhow::Error) {
 }
 
 async fn run() -> Result<()> {
+
     let args = Cli::parse();
+
+    load_user_data()?;
 
     let addr = args.address;
     let title = "MetaMask";

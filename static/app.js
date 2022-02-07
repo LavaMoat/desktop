@@ -10,18 +10,42 @@ function debug(msg) {
 window.dbg = debug;
 
 class App {
-  rpc = null;
+  ipc = null;
 
   constructor() {
-    this.rpc = new RpcProxy();
+    this.ipc = new RpcProxy();
   }
 
   async start() {
-    const address = await this.rpc.call("Account.create");
-    dbg(address);
+    //const accounts = await this.ipc.call("Account.list");
+    //dbg(JSON.stringify(accounts));
 
-    const accounts = await this.rpc.call("Account.list");
-    dbg(JSON.stringify(accounts));
+    const exists = await this.ipc.call("Account.exists");
+    if (!exists) {
+      dbg("No account yet...");
+      const signup = document.getElementById("signup");
+      signup.addEventListener('click', async () => {
+        debug("Signing up account...");
+        const {address, mnemonic} = await this.ipc.call("Account.signup", "mock password");
+        debug("Account address " + address);
+        debug("Signed up with " + mnemonic);
+      });
+    } else {
+      debug("Do login...");
+    }
+
+    /*
+    const login = document.getElementById("login");
+    login.addEventListener('click', async () => {
+      const passphrase = document.getElementById("passphrase").value;
+      debug("Decrypting wallet..." + passphrase);
+      const result = await this.ipc.call("Account.login", passphrase);
+    });
+    */
+
+    //const address = await this.ipc.call("Account.create");
+    //dbg(address);
+
   }
 }
 

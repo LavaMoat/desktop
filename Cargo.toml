@@ -30,6 +30,10 @@ ethers-core = "0.6"
 once_cell = "1.9"
 async-trait = "0.1"
 hex = "0.4"
+home = "0.5.3"
+bip39 = { version = "1", features = ["rand"] }
+rand = "0.8.4"
+eth-keystore = "0.3"
 
 [dependencies.oxide-auth]
 version = "0.5.1"

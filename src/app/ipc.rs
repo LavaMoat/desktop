@@ -4,10 +4,10 @@ use serde_json::Value;
 
 use crate::user::USER_DATA;
 
-struct ServiceHandler;
+struct IpcService;
 
 #[async_trait]
-impl Service for ServiceHandler {
+impl Service for IpcService {
     type Data = ();
     async fn handle(
         &self,
@@ -15,11 +15,33 @@ impl Service for ServiceHandler {
         _ctx: &Self::Data,
     ) -> Result<Option<Response>> {
         let response = match request.method() {
+            "Account.exists" => {
+                let user = USER_DATA.read().unwrap();
+                let result = user.exists().map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
+            "Account.signup" => {
+                let mut user = USER_DATA.write().unwrap();
+                let passphrase: String = request.deserialize()?;
+                let result = user.signup(&passphrase).map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
+            "Account.login" => {
+                let mut user = USER_DATA.write().unwrap();
+                let passphrase: String = request.deserialize()?;
+                let result = user.login(&passphrase).map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
+            /*
             "Account.create" => {
                 let mut user = USER_DATA.write().unwrap();
                 let address = user.create_account().map_err(Box::from)?;
                 Some((request, Value::String(address)).into())
             }
+            */
             "Account.list" => {
                 let user = USER_DATA.read().unwrap();
                 let accounts = user.list_accounts();
@@ -35,7 +57,7 @@ impl Service for ServiceHandler {
 
 pub(crate) async fn handle(message: &str) -> Result<Option<Response>> {
     let request = from_str(message)?;
-    let service: Box<dyn Service<Data = ()>> = Box::new(ServiceHandler {});
+    let service: Box<dyn Service<Data = ()>> = Box::new(IpcService {});
     let server = Server::new(vec![&service]);
     let response = server.serve(&request, &()).await;
     Ok(response)
