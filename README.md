@@ -6,6 +6,8 @@ Experimental desktop version of MetaMask.
 
 Essentially the application is a web server and native window that embeds a webview.
 
+The existing MetaMask browser extension will be a *bridge* that connects dapps but rather than calling Infura directly and managing accounts it will call the *desktop agent* over HTTP to interact with the blockchain.
+
 The embedded webview can communicate with the host code using JSON-RPC over a privileged IPC channel which uses `window.postMessage` under the hood.
 
 The web server runs a public service exposed at `/rpc` that is protected by [oauth2][] which allows *whitelisted* third-party applications to communicate with MetaMask using permissions explicitly granted by the resource owner (holder of the private keys).

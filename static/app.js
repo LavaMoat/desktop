@@ -9,6 +9,10 @@ function debug(msg) {
 
 window.dbg = debug;
 
+window.onerror = (e) => {
+  dbg("ERROR: " + e);
+}
+
 class App {
   ipc = null;
 
@@ -16,11 +20,10 @@ class App {
     this.ipc = new RpcProxy();
   }
 
-  importFile() {
-
-  }
-
   async start() {
+
+    dbg("Start was called...");
+
     const listAccounts = document.getElementById("list-accounts");
     const accountsList = document.querySelector(".accounts");
 
@@ -32,17 +35,19 @@ class App {
     const exists = await this.ipc.call("Account.exists");
     if (!exists) {
       const signup = document.getElementById("signup");
+      const passphrase = document.getElementById("signup-passphrase").value;
+      debug("Signup: " + passphrase);
       signup.addEventListener('click', async () => {
         debug("Signing up account...");
         const {address, mnemonic} = await this.ipc.call(
-          "Account.signup", "mock password");
+          "Account.signup", passphrase);
         debug("Account address " + address);
         debug("Signed up with " + mnemonic);
       });
     } else {
       const login = document.getElementById("login");
       login.addEventListener('click', async () => {
-        const passphrase = document.getElementById("passphrase").value;
+        const passphrase = document.getElementById("login-passphrase").value;
         const {address} = await this.ipc.call("Account.login", passphrase);
         debug("Logged in to account: " + address);
       });

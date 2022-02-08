@@ -26,6 +26,16 @@ impl Service for IpcService {
                 let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }
+            "Account.recover" => {
+                let mut user = USER_DATA.write().unwrap();
+                let (mnemonic, passphrase, is_primary): (String, String, bool) =
+                    request.deserialize()?;
+                let result = user
+                    .recover(&mnemonic, &passphrase, is_primary)
+                    .map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
             "Account.login" => {
                 let mut user = USER_DATA.write().unwrap();
                 let passphrase: String = request.deserialize()?;

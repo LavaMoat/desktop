@@ -99,6 +99,15 @@ impl User {
         Ok(storage)
     }
 
+    // Get the keystore folder
+    fn keystore(&self) -> Result<PathBuf> {
+        let file = self.storage()?.join(KEYSTORE);
+        if !file.is_dir() {
+            std::fs::create_dir_all(&file)?;
+        }
+        Ok(file)
+    }
+
     /// Determine if this user has a primary account loaded.
     pub fn exists(&self) -> bool {
         self.primary().is_some()
@@ -110,34 +119,53 @@ impl User {
             bail!("cannot signup with existing primary account");
         }
 
-        // Create the keystore folder
-        let file = self.storage()?.join(KEYSTORE);
-        if !file.is_dir() {
-            std::fs::create_dir_all(&file)?;
-        }
-
         // Generate a mnemonic for the account seed recovery
         let mnemonic = words(Default::default())?;
+
+        // Go through the recovery flow
+        let address = self.recover(&mnemonic, passphrase, true)?;
+
+        Ok(Signup { address, mnemonic })
+    }
+
+    /// Recover a private key from a seed phrase mnemonic.
+    pub fn recover(
+        &mut self,
+        mnemonic: &str,
+        passphrase: &str,
+        is_primary: bool,
+    ) -> Result<String> {
+        if is_primary && self.exists() {
+            bail!("cannot recover, primary account already exists");
+        }
+
+        let file = self.keystore()?;
+
         // Deterministic wallet from the seed recovery mnemonic
         let wallet = MnemonicBuilder::<English>::default()
             .phrase(&mnemonic[..])
             .build()?;
-
-        let private_key = wallet.signer().to_bytes().to_vec();
         let address = format_address(wallet.address());
 
         // Store the keystore to disc
         let mut rng = rand::thread_rng();
+        let private_key = wallet.signer().to_bytes().to_vec();
         let uuid = encrypt_key(&file, &mut rng, &private_key, passphrase)?;
+
+        let kind = if is_primary {
+            AccountKind::Primary
+        } else {
+            AccountKind::Imported
+        };
 
         let account = AccountView {
             address: address.clone(),
-            kind: AccountKind::Primary,
+            kind,
         };
         self.user_data.accounts.insert(uuid, account);
         self.save()?;
 
-        Ok(Signup { address, mnemonic })
+        Ok(address)
     }
 
     /// Create the user's master seed key.
