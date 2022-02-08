@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use eth_keystore::encrypt_key;
 use ethers::prelude::*;
 use ethers::signers::{coins_bip39::English, MnemonicBuilder};
+use tinyfiledialogs::password_box;
 
 use crate::helpers::{bip39::words, format_address};
 
@@ -185,28 +186,34 @@ impl User {
     ///
     /// Decrypts the primary keystore to verify the user can
     /// access the account.
-    pub fn login(&mut self, passphrase: &str) -> Result<AccountView> {
-        // Use in-memory user data for login check
-        let user_data = self.load_user_data()?;
-        if let Some(user_data) = user_data {
-            let primary = user_data
-                .accounts
-                .iter()
-                .find(|(_, v)| v.kind == AccountKind::Primary);
-            if let Some((uuid, account)) = primary {
-                let path = self.storage()?.join(KEYSTORE).join(uuid);
-                let _ = Wallet::decrypt_keystore(path, passphrase)?;
+    pub fn login(&mut self) -> Result<Option<AccountView>> {
+        if let Some(passphrase) = password_box(
+            "MetaMask", "Enter your account passphrase to login:") {
 
-                // Store the user data in-memory as they
-                // are now authenticated
-                self.load()?;
+            // Use in-memory user data for login check
+            let user_data = self.load_user_data()?;
+            if let Some(user_data) = user_data {
+                let primary = user_data
+                    .accounts
+                    .iter()
+                    .find(|(_, v)| v.kind == AccountKind::Primary);
+                if let Some((uuid, account)) = primary {
+                    let path = self.storage()?.join(KEYSTORE).join(uuid);
+                    let _ = Wallet::decrypt_keystore(path, passphrase)?;
 
-                Ok(account.clone())
+                    // Store the user data in-memory as they
+                    // are now authenticated
+                    self.load()?;
+
+                    Ok(Some(account.clone()))
+                } else {
+                    bail!("cannot login without primary account");
+                }
             } else {
-                bail!("cannot login without primary account");
+                bail!("cannot login without user data");
             }
         } else {
-            bail!("cannot login without user data");
+            Ok(None)
         }
     }
 
@@ -221,7 +228,6 @@ impl User {
         let user_data = self.user_data
             .as_ref()
             .ok_or_else(|| anyhow!("not logged in"))?;
-
         Ok(user_data.accounts.values().collect())
     }
 

@@ -2510,6 +2510,7 @@ dependencies = [
  "rust-embed",
  "serde",
  "serde_json",
+ "tinyfiledialogs",
  "tokio",
  "url",
  "wry",
@@ -4088,6 +4089,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
 dependencies = [
  "crunchy",
+]
+
+[[package]]
+name = "tinyfiledialogs"
+version = "3.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adc577626a3c26e4e1d470dbe5fe33d6fabc14e57114cb377acdb4da1a17dde9"
+dependencies = [
+ "cc",
+ "libc",
 ]
 
 [[package]]

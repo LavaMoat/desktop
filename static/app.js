@@ -73,6 +73,16 @@ function Dashboard(props) {
 
 function Home(props) {
   const {state} = props;
+  const {ipc} = state;
+
+  const login = async (event) => {
+    event.preventDefault();
+    const account = await ipc.call("Account.login");
+    if (account) {
+      state.primaryAccount = account;
+      route("/dashboard");
+    }
+  }
 
   if (state.authenticated) {
     route('/dashboard');
@@ -80,7 +90,7 @@ function Home(props) {
   }
 
   return html`
-    <p>Welcome! <a href="/signup">Signup</a> or <a href="/login">Login</a></p>
+    <p>Welcome! <a href="/signup">Signup</a> or <a href="#" onClick=${login}>Login</a></p>
   `;
 }
 

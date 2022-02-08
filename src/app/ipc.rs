@@ -38,8 +38,7 @@ impl Service for IpcService {
             }
             "Account.login" => {
                 let mut user = USER_DATA.write().unwrap();
-                let passphrase: String = request.deserialize()?;
-                let result = user.login(&passphrase).map_err(Box::from)?;
+                let result = user.login().map_err(Box::from)?;
                 let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }

@@ -35,6 +35,7 @@ bip39 = { version = "1", features = ["rand"] }
 rand = "0.8.4"
 eth-keystore = "0.3"
 reqwest = "0.11"
+tinyfiledialogs = "3.9"
 
 [dependencies.oxide-auth]
 version = "0.5.1"
