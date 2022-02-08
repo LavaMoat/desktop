@@ -43,6 +43,12 @@ impl Service for IpcService {
                 let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }
+            "Account.logout" => {
+                let mut user = USER_DATA.write().unwrap();
+                let result = user.logout().map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
             /*
             "Account.create" => {
                 let mut user = USER_DATA.write().unwrap();

@@ -22,13 +22,7 @@ type Address = String;
 pub static USER_DATA: Lazy<RwLock<User>> =
     Lazy::new(|| RwLock::new(Default::default()));
 
-/// Load the user data.
-pub fn load_user_data() -> Result<()> {
-    let mut user = USER_DATA.write().unwrap();
-    user.load()
-}
-
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
 pub enum AccountKind {
     #[serde(rename = "primary")]
     Primary,
@@ -36,7 +30,7 @@ pub enum AccountKind {
     Imported,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountView {
     address: Address,
     kind: AccountKind,
@@ -71,13 +65,20 @@ impl User {
     }
 
     /// Load the user data from disc.
-    fn load(&mut self) -> Result<()> {
+    fn load_user_data(&mut self) -> Result<Option<UserData>> {
         let file = self.storage()?.join(ACCOUNTS);
         if file.exists() && file.is_file() {
             let contents = std::fs::read_to_string(file)?;
             let user_data: UserData = serde_json::from_str(&contents)?;
-            self.user_data = user_data;
+            return Ok(Some(user_data));
         }
+        Ok(None)
+    }
+
+    /// Load the user data from disc.
+    fn load(&mut self) -> Result<()> {
+        self.user_data = self.load_user_data()?
+            .ok_or_else(|| anyhow!("no user data available"))?;
         Ok(())
     }
 
@@ -177,14 +178,35 @@ impl User {
     ///
     /// Decrypts the primary keystore to verify the user can
     /// access the account.
-    pub fn login(&mut self, passphrase: &str) -> Result<&AccountView> {
-        if let Some((uuid, account)) = self.primary() {
-            let path = self.storage()?.join(KEYSTORE).join(uuid);
-            let _ = Wallet::decrypt_keystore(path, passphrase)?;
-            Ok(account)
+    pub fn login(&mut self, passphrase: &str) -> Result<AccountView> {
+        // Use in-memory user data for login check
+        let user_data = self.load_user_data()?;
+        if let Some(user_data) = user_data {
+            let primary = user_data
+                .accounts
+                .iter()
+                .find(|(_, v)| v.kind == AccountKind::Primary);
+            if let Some((uuid, account)) = primary {
+                let path = self.storage()?.join(KEYSTORE).join(uuid);
+                let _ = Wallet::decrypt_keystore(path, passphrase)?;
+
+                // Store the user data in-memory as they
+                // are now authenticated
+                self.load()?;
+
+                Ok(account.clone())
+            } else {
+                bail!("cannot login without primary account");
+            }
         } else {
-            bail!("cannot login without primary account");
+            bail!("cannot login without user data");
         }
+    }
+
+    /// Logout of the account.
+    pub fn logout(&mut self) -> Result<()> {
+        self.user_data = Default::default();
+        Ok(())
     }
 
     /// List the user's accounts.

@@ -7,4 +7,3 @@ mod user;
 pub use app::window;
 pub use rates::eth_usd;
 pub use server::server;
-pub use user::load_user_data;

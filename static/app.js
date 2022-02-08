@@ -105,8 +105,15 @@ function Header(props) {
 }
 
 function Logout(props) {
-  props.state.reset();
-  route("/");
+  const {ipc} = props.state;
+  const logout = async () => {
+    await ipc.call("Account.logout");
+    props.state.reset();
+    route("/");
+  }
+
+  useEffect(() => logout(), []);
+  return null;
 }
 
 function App (props) {
