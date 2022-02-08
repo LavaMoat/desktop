@@ -24,16 +24,20 @@ Applications that connect to the Metamask *desktop agent* should take precaution
 
 ## Build
 
-To compile on Linux install `libwebkit2gtk` see the [wry-linux-notes][].
-
-To fetch rates from [coincap][] the `COINCAP_API_KEY` must be set at compile time.
-
-## Bundles
-
-Install [cargo-bundle][] and build for the platform:
+Install a patched version of [cargo-bundle][]:
 
 ```
-cargo bundle --release
+cargo install --git https://github.com/tmpfs/cargo-bundle.git --branch master
+```
+
+* To compile on Linux install `libwebkit2gtk` see the [wry-linux-notes][].
+* To fetch rates from [coincap][] the `COINCAP_API_KEY` must be set at compile time.
+
+### Macos
+
+```
+make release-macos-aarch64
+make release-macos-x86_64
 ```
 
 [cargo-bundle]: https://github.com/burtonageo/cargo-bundle
