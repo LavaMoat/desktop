@@ -52,7 +52,7 @@ pub struct Signup {
 
 #[derive(Debug, Default)]
 pub struct User {
-    user_data: UserData,
+    user_data: Option<UserData>,
 }
 
 impl User {
@@ -77,17 +77,20 @@ impl User {
 
     /// Load the user data from disc.
     fn load(&mut self) -> Result<()> {
-        self.user_data = self.load_user_data()?
-            .ok_or_else(|| anyhow!("no user data available"))?;
+        self.user_data = self.load_user_data()?;
         Ok(())
     }
 
     /// Find the primary account.
-    fn primary(&self) -> Option<(&UUID, &AccountView)> {
-        self.user_data
+    fn primary(&self) -> Result<Option<(&UUID, &AccountView)>> {
+        let user_data = self.user_data
+            .as_ref()
+            .ok_or_else(|| anyhow!("not logged in"))?;
+
+        Ok(user_data
             .accounts
             .iter()
-            .find(|(k, v)| v.kind == AccountKind::Primary)
+            .find(|(k, v)| v.kind == AccountKind::Primary))
     }
 
     /// Get the application-specific storage directory.
@@ -110,13 +113,13 @@ impl User {
     }
 
     /// Determine if this user has a primary account loaded.
-    pub fn exists(&self) -> bool {
-        self.primary().is_some()
+    pub fn exists(&self) -> Result<bool> {
+        self.primary().map(|o| o.is_some())
     }
 
     /// Create a new account for this user on disc.
     pub fn signup(&mut self, passphrase: &str) -> Result<Signup> {
-        if self.exists() {
+        if self.exists()? {
             bail!("cannot signup with existing primary account");
         }
 
@@ -136,11 +139,15 @@ impl User {
         passphrase: &str,
         is_primary: bool,
     ) -> Result<String> {
-        if is_primary && self.exists() {
+
+        let file = self.keystore()?;
+        if is_primary && self.exists()? {
             bail!("cannot recover, primary account already exists");
         }
 
-        let file = self.keystore()?;
+        let mut user_data = self.user_data
+            .as_mut()
+            .ok_or_else(|| anyhow!("not logged in"))?;
 
         // Deterministic wallet from the seed recovery mnemonic
         let wallet = MnemonicBuilder::<English>::default()
@@ -163,7 +170,7 @@ impl User {
             address: address.clone(),
             kind,
         };
-        self.user_data.accounts.insert(uuid, account);
+        user_data.accounts.insert(uuid, account);
         self.save()?;
 
         Ok(address)
@@ -205,13 +212,17 @@ impl User {
 
     /// Logout of the account.
     pub fn logout(&mut self) -> Result<()> {
-        self.user_data = Default::default();
+        self.user_data = None;
         Ok(())
     }
 
     /// List the user's accounts.
-    pub fn list_accounts(&self) -> Vec<&AccountView> {
-        self.user_data.accounts.values().collect()
+    pub fn list_accounts(&self) -> Result<Vec<&AccountView>> {
+        let user_data = self.user_data
+            .as_ref()
+            .ok_or_else(|| anyhow!("not logged in"))?;
+
+        Ok(user_data.accounts.values().collect())
     }
 
     /// Add a derived account.

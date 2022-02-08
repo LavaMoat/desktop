@@ -1,5 +1,4 @@
 use anyhow::Result;
-use reqwest::header::*;
 use serde::Deserialize;
 
 const COINCAP_API_KEY: &str = env!("COINCAP_API_KEY");

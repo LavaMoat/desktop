@@ -15,7 +15,7 @@ impl Service for IpcService {
         let response = match request.method() {
             "Account.exists" => {
                 let user = USER_DATA.read().unwrap();
-                let result = user.exists();
+                let result = user.exists().map_err(Box::from)?;
                 let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }
@@ -58,7 +58,7 @@ impl Service for IpcService {
             */
             "Account.list" => {
                 let user = USER_DATA.read().unwrap();
-                let accounts = user.list_accounts();
+                let accounts = user.list_accounts().map_err(Box::from)?;
                 let value =
                     serde_json::to_value(accounts).map_err(Box::from)?;
                 Some((request, value).into())
