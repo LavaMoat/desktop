@@ -1,4 +1,12 @@
+import { h, Component, render } from './vendor/preact.module.js';
+import { useState } from './vendor/hooks.module.js';
+import Router from './vendor/router.module.js';
+import htm from './vendor/htm.module.js';
+
 import RpcProxy from './rpc.js';
+
+// Initialize htm with Preact
+const html = htm.bind(h);
 
 const _dbg = document.querySelector(".debug");
 function debug(msg) {
@@ -13,6 +21,67 @@ window.onerror = (e) => {
   dbg("ERROR: " + e);
 }
 
+function Signup(props) {
+  return html`
+    <div>
+      <h3>Signup</h3>
+      <input type="password" id="signup-passphrase" />
+      <button>Create an account</button>
+    </div>
+  `;
+}
+
+function Login(props) {
+  const [passphrase, setPassphrase] = useState("");
+
+  const onChange = (event) => {
+    event.preventDefault();
+    setPassphrase(event.target.value);
+  }
+
+  const onClick = (event) => {
+    event.preventDefault();
+    throw new Error("mock error");
+    dbg("Login:" + passphrase);
+  }
+
+  return html`
+    <div>
+      <h3>Login</h3>
+      <input type="password" onChange=${onChange} value=${passphrase} />
+      <button onClick=${onClick}>Login</button>
+    </div>
+  `;
+}
+
+function Header(props) {
+  return html`
+    <header>
+      <h1><a href="/">MetaMask</a></h1>
+    </header>
+  `;
+}
+
+function Home(props) {
+  return html`
+    <p>Welcome! <a href="/signup">Signup</a> or <a href="/login">Login</a></p>
+  `;
+}
+
+function App (props) {
+  return html`
+    <${Header} />
+    <${Router}>
+      <${Home} path="/" />
+      <${Signup} path="/signup" />
+      <${Login} path="/login" />
+    <//>
+  `;
+}
+
+render(html`<${App} />`, document.querySelector("main"));
+
+/*
 class App {
   ipc = null;
 
@@ -61,3 +130,4 @@ if (window.ipc) {
 } else {
   alert("No IPC mechanism, window.ipc is not available");
 }
+*/
