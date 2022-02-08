@@ -1,9 +1,10 @@
 import { h, Component, render } from './vendor/preact.module.js';
-import { useState } from './vendor/hooks.module.js';
-import Router from './vendor/router.module.js';
+import { useState, useEffect } from './vendor/hooks.module.js';
+import Router, { route } from './vendor/router.module.js';
 import htm from './vendor/htm.module.js';
+import {reaction, makeObservable, observable} from './vendor/mobx.module.js';
 
-import RpcProxy from './rpc.js';
+import IpcProxy from './ipc.js';
 
 // Initialize htm with Preact
 const html = htm.bind(h);
@@ -18,20 +19,25 @@ function debug(msg) {
 window.dbg = debug;
 
 window.onerror = (e) => {
-  dbg("ERROR: " + e);
+  dbg('' + e);
+}
+
+window.onunhandledrejection = (e) => {
+  dbg('' + e.reason);
 }
 
 function Signup(props) {
   return html`
     <div>
       <h3>Signup</h3>
-      <input type="password" id="signup-passphrase" />
+      <input type="password" />
       <button>Create an account</button>
     </div>
   `;
 }
 
 function Login(props) {
+  const {ipc} = props.state;
   const [passphrase, setPassphrase] = useState("");
 
   const onChange = (event) => {
@@ -39,10 +45,18 @@ function Login(props) {
     setPassphrase(event.target.value);
   }
 
-  const onClick = (event) => {
+  const onClick = async (event) => {
     event.preventDefault();
-    throw new Error("mock error");
-    dbg("Login:" + passphrase);
+
+    dbg("Doing login...");
+
+    try {
+      const account = await ipc.call("Account.login", passphrase);
+      props.state.primaryAccount = account;
+      route("/dashboard");
+    } catch (e) {
+      dbg("Login failed: " + e);
+    }
   }
 
   return html`
@@ -55,10 +69,44 @@ function Login(props) {
 }
 
 function Header(props) {
+  const [isAuthenticated, setAuthenticated] =
+    useState(props.state.authenticated);
+
+  reaction(
+    () => props.state.primaryAccount,
+    (value) => setAuthenticated(value !== null));
+
+  const AuthState = isAuthenticated
+    ? html`<p>Logged in!</p>`
+    : html`<p>Needs log in</p>`;
+
   return html`
     <header>
       <h1><a href="/">MetaMask</a></h1>
+      ${AuthState}
     </header>
+  `;
+}
+
+function Dashboard(props) {
+  const [accounts, setAccounts] = useState(props.state.accounts);
+  const {ipc} = props.state;
+
+  reaction(
+    () => props.state.accounts,
+    (value) => setAccounts(value));
+
+  const loadAccounts = async () => {
+    const accounts = await ipc.call("Account.list");
+    props.state.accounts = accounts;
+  }
+
+  useEffect(() => {
+    loadAccounts();
+  }, []);
+
+  return html`
+    <p>${JSON.stringify(accounts)}</p>
   `;
 }
 
@@ -68,13 +116,35 @@ function Home(props) {
   `;
 }
 
+class State {
+  ipc = null;
+  primaryAccount = null;
+  accounts = [];
+
+  constructor() {
+    makeObservable(this, {
+      primaryAccount: observable,
+      accounts: observable,
+    });
+
+    this.ipc = new IpcProxy();
+  }
+
+  get authenticated() {
+    this.primaryAccount !== null;
+  }
+}
+
 function App (props) {
+  const state = new State();
+
   return html`
-    <${Header} />
+    <${Header} state=${state} />
     <${Router}>
-      <${Home} path="/" />
-      <${Signup} path="/signup" />
-      <${Login} path="/login" />
+      <${Home} path="/" state=${state} />
+      <${Signup} path="/signup" state=${state} />
+      <${Login} path="/login" state=${state} />
+      <${Dashboard} path="/dashboard" state=${state} />
     <//>
   `;
 }

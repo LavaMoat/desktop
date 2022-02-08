@@ -1,4 +1,4 @@
-export default class RpcProxy {
+export default class IpcProxy {
   _id = 0;
   _ipc = null;
   _requests = new Map();
