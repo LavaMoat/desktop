@@ -4,27 +4,11 @@ import Router, { route } from './vendor/router.module.js';
 import htm from './vendor/htm.module.js';
 import {reaction, makeObservable, observable} from './vendor/mobx.module.js';
 
-import IpcProxy from './ipc.js';
+import './debug.js';
+import State from './state.js';
 
 // Initialize htm with Preact
 const html = htm.bind(h);
-
-const _dbg = document.querySelector(".debug");
-function debug(msg) {
-  const el = document.createElement("p");
-  el.innerText = '' + msg;
-  _dbg.appendChild(el);
-}
-
-window.dbg = debug;
-
-window.onerror = (e) => {
-  dbg('' + e);
-}
-
-window.onunhandledrejection = (e) => {
-  dbg('' + e.reason);
-}
 
 function Signup(props) {
   return html`
@@ -47,9 +31,6 @@ function Login(props) {
 
   const onClick = async (event) => {
     event.preventDefault();
-
-    dbg("Doing login...");
-
     try {
       const account = await ipc.call("Account.login", passphrase);
       props.state.primaryAccount = account;
@@ -65,26 +46,6 @@ function Login(props) {
       <input type="password" onChange=${onChange} value=${passphrase} />
       <button onClick=${onClick}>Login</button>
     </div>
-  `;
-}
-
-function Header(props) {
-  const [isAuthenticated, setAuthenticated] =
-    useState(props.state.authenticated);
-
-  reaction(
-    () => props.state.primaryAccount,
-    (value) => setAuthenticated(value !== null));
-
-  const AuthState = isAuthenticated
-    ? html`<p>Logged in!</p>`
-    : html`<p>Needs log in</p>`;
-
-  return html`
-    <header>
-      <h1><a href="/">MetaMask</a></h1>
-      ${AuthState}
-    </header>
   `;
 }
 
@@ -111,93 +72,57 @@ function Dashboard(props) {
 }
 
 function Home(props) {
+  const {state} = props;
+
+  if (state.authenticated) {
+    route('/dashboard');
+    return null;
+  }
+
   return html`
     <p>Welcome! <a href="/signup">Signup</a> or <a href="/login">Login</a></p>
   `;
 }
 
-class State {
-  ipc = null;
-  primaryAccount = null;
-  accounts = [];
+function Header(props) {
+  const [isAuthenticated, setAuthenticated] =
+    useState(props.state.authenticated);
 
-  constructor() {
-    makeObservable(this, {
-      primaryAccount: observable,
-      accounts: observable,
-    });
+  reaction(
+    () => props.state.authenticated,
+    (value) => setAuthenticated(value));
 
-    this.ipc = new IpcProxy();
-  }
+  const AuthState = isAuthenticated
+    ? html`<p><a href="/logout">Logout</a></p>`
+    : html``;
 
-  get authenticated() {
-    this.primaryAccount !== null;
-  }
+  return html`
+    <header>
+      <h1><a href="/">MetaMask</a></h1>
+      ${AuthState}
+    </header>
+  `;
+}
+
+function Logout(props) {
+  props.state.reset();
+  route("/");
 }
 
 function App (props) {
   const state = new State();
 
   return html`
+    <div class="debug"></div>
     <${Header} state=${state} />
     <${Router}>
       <${Home} path="/" state=${state} />
       <${Signup} path="/signup" state=${state} />
       <${Login} path="/login" state=${state} />
+      <${Logout} path="/logout" state=${state} />
       <${Dashboard} path="/dashboard" state=${state} />
     <//>
   `;
 }
 
 render(html`<${App} />`, document.querySelector("main"));
-
-/*
-class App {
-  ipc = null;
-
-  constructor() {
-    this.ipc = new RpcProxy();
-  }
-
-  async start() {
-
-    dbg("Start was called...");
-
-    const listAccounts = document.getElementById("list-accounts");
-    const accountsList = document.querySelector(".accounts");
-
-    listAccounts.addEventListener('click', async () => {
-      const accounts = await this.ipc.call("Account.list");
-      accountsList.innerText = JSON.stringify(accounts, undefined, 2);
-    });
-
-    const exists = await this.ipc.call("Account.exists");
-    if (!exists) {
-      const signup = document.getElementById("signup");
-      const passphrase = document.getElementById("signup-passphrase").value;
-      debug("Signup: " + passphrase);
-      signup.addEventListener('click', async () => {
-        debug("Signing up account...");
-        const {address, mnemonic} = await this.ipc.call(
-          "Account.signup", passphrase);
-        debug("Account address " + address);
-        debug("Signed up with " + mnemonic);
-      });
-    } else {
-      const login = document.getElementById("login");
-      login.addEventListener('click', async () => {
-        const passphrase = document.getElementById("login-passphrase").value;
-        const {address} = await this.ipc.call("Account.login", passphrase);
-        debug("Logged in to account: " + address);
-      });
-    }
-  }
-}
-
-if (window.ipc) {
-  const app = new App();
-  app.start();
-} else {
-  alert("No IPC mechanism, window.ipc is not available");
-}
-*/

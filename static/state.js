@@ -1,4 +1,6 @@
-export default class IpcProxy {
+import {makeObservable, observable, computed} from './vendor/mobx.module.js';
+
+class IpcProxy {
   _id = 0;
   _ipc = null;
   _requests = new Map();
@@ -51,5 +53,30 @@ export default class IpcProxy {
     };
     this._send(request);
     return Promise.resolve();
+  }
+}
+
+export default class State {
+  ipc = null;
+  primaryAccount = null;
+  accounts = [];
+
+  constructor() {
+    makeObservable(this, {
+      primaryAccount: observable,
+      authenticated: computed,
+      accounts: observable,
+    });
+
+    this.ipc = new IpcProxy();
+  }
+
+  reset() {
+    this.primaryAccount = null;
+    this.accounts = [];
+  }
+
+  get authenticated() {
+    return this.primaryAccount !== null;
   }
 }
