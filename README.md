@@ -20,6 +20,8 @@ The secondary caveat is that it is currently very hard to run SSL/TLS for a serv
 
 To prevent supply chain attacks on the assets (HTML/CSS/Javascript etc.) embedded in the executable with access to the privileged IPC channel it is recommended that vanilla Javascript is used with minimal dependencies. All dependencies should be vetted and vendored - there is no `npm install` and there should not be any build step. It is suggested that [preact][] and [htm][] be the only vendored dependencies.
 
+Applications that connect to the Metamask *desktop agent* should take precautions to prevent supply chain attacks by using [LavaMoat][].
+
 ## Build
 
 To compile on Linux install `libwebkit2gtk` see the [wry-linux-notes][].
@@ -41,3 +43,4 @@ cargo bundle --release
 [mkcert]: https://github.com/FiloSottile/mkcert
 [preact]: https://preactjs.com/
 [htm]: https://github.com/developit/htm
+[LavaMoat]: https://github.com/LavaMoat/LavaMoat
