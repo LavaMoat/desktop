@@ -101,15 +101,18 @@ function App (props) {
   const state = new State();
 
   return html`
-    <div class="debug"></div>
-    <${Header} state=${state} />
-    <${Router}>
-      <${Home} path="/" state=${state} />
-      <${Signup} path="/signup" state=${state} />
-      <${Logout} path="/logout" state=${state} />
-      <${Dashboard} path="/dashboard" state=${state} />
-    <//>
+    <main>
+      <div class="debug"></div>
+      <${Header} state=${state} />
+      <img src="qrcode://?text=Hello+world" />
+      <${Router}>
+        <${Home} path="/" state=${state} />
+        <${Signup} path="/signup" state=${state} />
+        <${Logout} path="/logout" state=${state} />
+        <${Dashboard} path="/dashboard" state=${state} />
+      <//>
+    </main>
   `;
 }
 
-render(html`<${App} />`, document.querySelector("main"));
+render(html`<${App} />`, document.body);

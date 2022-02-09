@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use url::Url;
 use wry::{
     application::{
         event::{Event, StartCause, WindowEvent},
@@ -11,7 +9,13 @@ use wry::{
     webview::WebViewBuilder,
 };
 
+use url::Url;
+use qrcode::QrCode;
+use image::{Luma, DynamicImage};
+
+use std::collections::HashMap;
 use std::sync::mpsc::channel;
+
 
 //use log::debug;
 
@@ -62,10 +66,11 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
         .with_menu(menu_bar)
         .build(&event_loop)?;
 
-    let dev_tool = if cfg!(debug) { true } else { false };
+    let dev_tool = if cfg!(debug_assertions) { true } else { false };
 
     let webview = WebViewBuilder::new(window)?
         .with_dev_tool(dev_tool)
+        .with_url(url.as_ref())?
         .with_custom_protocol("qrcode".into(), move |request| {
             let path = request.uri().replace("qrcode://", "");
             let uri = Url::parse("http://example.com")
@@ -79,8 +84,19 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
                 .collect::<_>();
 
             if let Some(value) = query.get("text") {
-                let data: Vec<u8> = vec![];
-                ResponseBuilder::new().mimetype("image/png").body(data)
+
+                // Encode some data into bits.
+                let code = QrCode::new(value.as_bytes()).unwrap();
+                // Render the bits into an image.
+                let image = code.render::<Luma<u8>>().build();
+
+                let png_image = DynamicImage::ImageLuma8(image);
+                let mut bytes: Vec<u8> = Vec::new();
+                png_image.write_to(&mut bytes, image::ImageOutputFormat::Png)
+                    .unwrap();
+
+
+                ResponseBuilder::new().mimetype("image/png").body(bytes)
             } else {
                 ResponseBuilder::new()
                     .status(400)
@@ -88,7 +104,6 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
                     .body("Bad request".as_bytes().to_vec())
             }
         })
-        .with_url(url.as_ref())?
         .with_ipc_handler(move |_, message| {
             tx.send(message)
                 .expect("failed to send IPC message to async thread (bridge)");
@@ -103,7 +118,6 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
                 webview.devtool();
             }
             Event::UserEvent(script) => {
-                //debug!("{}", script);
                 webview
                     .evaluate_script(&script)
                     .expect("failed to evaluate script in webview");
