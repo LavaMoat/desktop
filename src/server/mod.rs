@@ -11,7 +11,6 @@ use tokio::sync::oneshot;
 
 mod assets;
 mod oauth;
-mod qrcode;
 mod rpc;
 
 #[actix_web::main]
@@ -39,8 +38,6 @@ pub async fn server<A: ToSocketAddrs>(
         App::new()
             .app_data(Data::new(pkce_agent.clone()))
             .wrap(cors)
-            .service(
-                web::resource("/qrcode").route(web::get().to(qrcode::handler)))
             .service(
                 web::scope("/oauth")
                     .service(
