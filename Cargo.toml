@@ -39,6 +39,7 @@ tinyfiledialogs = "3.9"
 qrcode = "0.12"
 image = "0.23"
 totp-rs = "0.7.3"
+zeroize = { version = "1.5", features = ["zeroize_derive"] }
 
 [dependencies.oxide-auth]
 version = "0.5.1"

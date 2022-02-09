@@ -16,6 +16,8 @@ use tinyfiledialogs::password_box;
 
 use crate::helpers::{bip39::words, format_address};
 
+mod account;
+
 const ACCOUNTS: &str = "accounts.json";
 const KEYSTORE: &str = "keystore";
 
@@ -240,4 +242,3 @@ impl User {
         todo!()
     }
 }
-

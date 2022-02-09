@@ -24,7 +24,7 @@ pub async fn server<A: ToSocketAddrs>(
     pkce_setup.register_client(
         "LocalClient",
         "http://localhost:7778/".parse::<url::Url>()?,
-        "default-scope"
+        "default-scope",
     );
 
     // Start the actor

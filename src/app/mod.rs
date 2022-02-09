@@ -9,13 +9,12 @@ use wry::{
     webview::WebViewBuilder,
 };
 
-use url::Url;
+use image::{DynamicImage, Luma};
 use qrcode::QrCode;
-use image::{Luma, DynamicImage};
+use url::Url;
 
 use std::collections::HashMap;
 use std::sync::mpsc::channel;
-
 
 //use log::debug;
 
@@ -84,7 +83,6 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
                 .collect::<_>();
 
             if let Some(value) = query.get("text") {
-
                 // Encode some data into bits.
                 let code = QrCode::new(value.as_bytes()).unwrap();
                 // Render the bits into an image.
@@ -92,9 +90,9 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
 
                 let png_image = DynamicImage::ImageLuma8(image);
                 let mut bytes: Vec<u8> = Vec::new();
-                png_image.write_to(&mut bytes, image::ImageOutputFormat::Png)
+                png_image
+                    .write_to(&mut bytes, image::ImageOutputFormat::Png)
                     .unwrap();
-
 
                 ResponseBuilder::new().mimetype("image/png").body(bytes)
             } else {

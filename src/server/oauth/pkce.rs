@@ -35,9 +35,7 @@ impl Actor for PkceSetup {
 
 impl PkceSetup {
     pub fn new() -> PkceSetup {
-        let scopes: Vec<Scope> = vec![
-            "default-scope".parse().unwrap(),
-        ];
+        let scopes: Vec<Scope> = vec!["default-scope".parse().unwrap()];
 
         let registrar = ClientMap::new();
         let authorizer = AuthMap::new(RandomGenerator::new(16));
@@ -52,11 +50,7 @@ impl PkceSetup {
     }
 
     pub fn register_client(&mut self, id: &str, url: url::Url, scope: &str) {
-        let client = Client::public(
-            id,
-            url.into(),
-            scope.parse().unwrap(),
-        );
+        let client = Client::public(id, url.into(), scope.parse().unwrap());
         self.registrar.register_client(client);
     }
 
@@ -143,8 +137,7 @@ where
                 op.run(self.with_solicitor(solicitor))
             }
             _ => {
-                op.run(self.allowing_endpoint(
-                        Allow("LocalClient".to_string())))
+                op.run(self.allowing_endpoint(Allow("LocalClient".to_string())))
             }
         }
     }
