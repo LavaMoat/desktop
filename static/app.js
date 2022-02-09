@@ -20,35 +20,6 @@ function Signup(props) {
   `;
 }
 
-function Login(props) {
-  const {ipc} = props.state;
-  const [passphrase, setPassphrase] = useState("");
-
-  const onChange = (event) => {
-    event.preventDefault();
-    setPassphrase(event.target.value);
-  }
-
-  const onClick = async (event) => {
-    event.preventDefault();
-    try {
-      const account = await ipc.call("Account.login", passphrase);
-      props.state.primaryAccount = account;
-      route("/dashboard");
-    } catch (e) {
-      dbg("Login failed: " + e);
-    }
-  }
-
-  return html`
-    <div>
-      <h3>Login</h3>
-      <input type="password" onChange=${onChange} value=${passphrase} />
-      <button onClick=${onClick}>Login</button>
-    </div>
-  `;
-}
-
 function Dashboard(props) {
   const [accounts, setAccounts] = useState(props.state.accounts);
   const {ipc} = props.state;
@@ -135,7 +106,6 @@ function App (props) {
     <${Router}>
       <${Home} path="/" state=${state} />
       <${Signup} path="/signup" state=${state} />
-      <${Login} path="/login" state=${state} />
       <${Logout} path="/logout" state=${state} />
       <${Dashboard} path="/dashboard" state=${state} />
     <//>

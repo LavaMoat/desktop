@@ -84,7 +84,8 @@ impl User {
 
     /// Find the primary account.
     fn primary(&self) -> Result<Option<(&UUID, &AccountView)>> {
-        let user_data = self.user_data
+        let user_data = self
+            .user_data
             .as_ref()
             .ok_or_else(|| anyhow!("not logged in"))?;
 
@@ -140,13 +141,13 @@ impl User {
         passphrase: &str,
         is_primary: bool,
     ) -> Result<String> {
-
         let file = self.keystore()?;
         if is_primary && self.exists()? {
             bail!("cannot recover, primary account already exists");
         }
 
-        let mut user_data = self.user_data
+        let mut user_data = self
+            .user_data
             .as_mut()
             .ok_or_else(|| anyhow!("not logged in"))?;
 
@@ -187,9 +188,9 @@ impl User {
     /// Decrypts the primary keystore to verify the user can
     /// access the account.
     pub fn login(&mut self) -> Result<Option<AccountView>> {
-        if let Some(passphrase) = password_box(
-            "MetaMask", "Enter your account passphrase to login:") {
-
+        if let Some(passphrase) =
+            password_box("MetaMask", "Enter your account passphrase to login:")
+        {
             // Use in-memory user data for login check
             let user_data = self.load_user_data()?;
             if let Some(user_data) = user_data {
@@ -225,7 +226,8 @@ impl User {
 
     /// List the user's accounts.
     pub fn list_accounts(&self) -> Result<Vec<&AccountView>> {
-        let user_data = self.user_data
+        let user_data = self
+            .user_data
             .as_ref()
             .ok_or_else(|| anyhow!("not logged in"))?;
         Ok(user_data.accounts.values().collect())

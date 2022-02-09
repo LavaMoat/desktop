@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use url::Url;
 use wry::{
     application::{
         event::{Event, StartCause, WindowEvent},
@@ -5,6 +7,7 @@ use wry::{
         menu::{MenuBar, MenuItem},
         window::WindowBuilder,
     },
+    http::ResponseBuilder,
     webview::WebViewBuilder,
 };
 
@@ -59,7 +62,32 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
         .with_menu(menu_bar)
         .build(&event_loop)?;
 
+    let dev_tool = if cfg!(debug) { true } else { false };
+
     let webview = WebViewBuilder::new(window)?
+        .with_dev_tool(dev_tool)
+        .with_custom_protocol("qrcode".into(), move |request| {
+            let path = request.uri().replace("qrcode://", "");
+            let uri = Url::parse("http://example.com")
+                .unwrap()
+                .join(&path)
+                .unwrap();
+
+            let query: HashMap<String, String> = uri
+                .query_pairs()
+                .map(|(k, v)| (k.into_owned(), v.into_owned()))
+                .collect::<_>();
+
+            if let Some(value) = query.get("text") {
+                let data: Vec<u8> = vec![];
+                ResponseBuilder::new().mimetype("image/png").body(data)
+            } else {
+                ResponseBuilder::new()
+                    .status(400)
+                    .mimetype("text/plain")
+                    .body("Bad request".as_bytes().to_vec())
+            }
+        })
         .with_url(url.as_ref())?
         .with_ipc_handler(move |_, message| {
             tx.send(message)
@@ -72,7 +100,7 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
 
         match event {
             Event::NewEvents(StartCause::Init) => {
-                //println!("Window is ready!")
+                webview.devtool();
             }
             Event::UserEvent(script) => {
                 //debug!("{}", script);

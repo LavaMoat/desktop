@@ -7,7 +7,7 @@ default-run = "metamask"
 
 [dependencies]
 anyhow = "1"
-wry = "0.13"
+wry = "0.13.1"
 rust-embed = "6.3"
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
@@ -36,6 +36,8 @@ rand = "0.8.4"
 eth-keystore = "0.3"
 reqwest = "0.11"
 tinyfiledialogs = "3.9"
+qrcode = "0.12"
+image = "0.23"
 
 [dependencies.oxide-auth]
 version = "0.5.1"
