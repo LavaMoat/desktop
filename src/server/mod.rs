@@ -21,12 +21,16 @@ pub async fn server<A: ToSocketAddrs>(
     let pkce_agent = oauth::PkceSetup::new().start();
 
     let server = HttpServer::new(move || {
+        let origins = vec![
+            "http://localhost:7777",
+            // Test local client
+            "http://localhost:7778",
+        ];
+
         let cors = Cors::default()
-            .allowed_origin("http://localhost:7777")
-            .allowed_origin("http://localhost:7778")
-            //.allowed_origin_fn(|origin, _req_head| {
-            //origin.as_bytes().ends_with(b".rust-lang.org")
-            //})
+            .allowed_origin_fn(move |origin, _req_head| {
+                origins.iter().find(|o| *o == origin).is_some()
+            })
             .allowed_methods(vec!["GET", "POST"])
             .allowed_headers(vec![
                 http::header::AUTHORIZATION,
