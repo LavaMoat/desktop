@@ -12,8 +12,15 @@ use crate::helpers::{bip39::*, format_address};
 #[derive(ZeroizeOnDrop)]
 pub(crate) struct Totp {
     url: String,
+    // FIXME: how to zeroize LocalWallet too?
     #[zeroize(skip)]
     wallet: LocalWallet,
+}
+
+pub(crate) struct NewAccount {
+    address: String,
+    uuid: String,
+    totp_uuid: String,
 }
 
 #[derive(Default, ZeroizeOnDrop)]
@@ -86,8 +93,7 @@ where
         mnemonic: &str,
     ) -> Result<(String, String)> {
         // Deterministic wallet from the seed recovery mnemonic
-        let wallet =
-            MnemonicBuilder::<W>::default().phrase(mnemonic).build()?;
+        let wallet = Self::build_wallet(mnemonic)?;
         let address = format_address(wallet.address());
 
         // Store the keystore to disc
@@ -98,8 +104,15 @@ where
         Ok((address, uuid))
     }
 
+    /// Deterministic wallet from a seed recovery mnemonic.
+    pub fn build_wallet(mnemonic: &str) -> Result<LocalWallet> {
+        let wallet =
+            MnemonicBuilder::<W>::default().phrase(mnemonic).build()?;
+        Ok(wallet)
+    }
+
     // Create a new account by writing the files to disc.
-    pub fn build(&self, keystore_dir: &PathBuf) -> Result<String> {
+    pub fn build(&self, keystore_dir: &PathBuf) -> Result<NewAccount> {
         let passphrase = self
             .passphrase
             .as_ref()
@@ -119,6 +132,10 @@ where
         let (address, uuid) =
             self.write_primary_wallet(keystore_dir, passphrase, mnemonic)?;
 
-        Ok(totp_uuid)
+        Ok(NewAccount {
+            address,
+            uuid,
+            totp_uuid,
+        })
     }
 }

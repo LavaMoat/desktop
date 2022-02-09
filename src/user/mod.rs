@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use eth_keystore::encrypt_key;
 use ethers::prelude::*;
-use ethers::signers::{coins_bip39::English, MnemonicBuilder};
+use ethers::signers::{coins_bip39::{English, Wordlist}, MnemonicBuilder};
 use tinyfiledialogs::password_box;
 
 use crate::helpers::{bip39::words, format_address};
@@ -24,7 +24,7 @@ const KEYSTORE: &str = "keystore";
 type UUID = String;
 type Address = String;
 
-pub static USER_DATA: Lazy<RwLock<User>> =
+pub static USER_DATA: Lazy<RwLock<User<English>>> =
     Lazy::new(|| RwLock::new(Default::default()));
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
@@ -55,12 +55,22 @@ pub struct Signup {
     mnemonic: String,
 }
 
-#[derive(Debug, Default)]
-pub struct User {
+#[derive(Debug)]
+pub struct User<W> where W: Wordlist {
     user_data: Option<UserData>,
+    language: W,
 }
 
-impl User {
+impl Default for User<English> {
+    fn default() -> Self {
+        Self {
+            user_data: None,
+            language: English,
+        }
+    }
+}
+
+impl<W> User<W> where W: Wordlist {
     /// Save the user data to disc.
     fn save(&mut self) -> Result<()> {
         let file = self.storage()?.join(ACCOUNTS);
@@ -156,7 +166,7 @@ impl User {
             .ok_or_else(|| anyhow!("not logged in"))?;
 
         // Deterministic wallet from the seed recovery mnemonic
-        let wallet = MnemonicBuilder::<English>::default()
+        let wallet = MnemonicBuilder::<W>::default()
             .phrase(&mnemonic[..])
             .build()?;
         let address = format_address(wallet.address());
