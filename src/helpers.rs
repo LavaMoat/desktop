@@ -47,6 +47,23 @@ pub mod bip39 {
         Long(u16),
     }
 
+    impl WordCount {
+        /// Short word count (12).
+        pub fn short() -> Self {
+            WordCount::Short(12)
+        }
+
+        /// Medium word count (18).
+        pub fn medium() -> Self {
+            WordCount::Medium(18)
+        }
+
+        /// Long word count (24).
+        pub fn long() -> Self {
+            WordCount::Long(24)
+        }
+    }
+
     impl Default for WordCount {
         fn default() -> Self {
             Self::Short(12)

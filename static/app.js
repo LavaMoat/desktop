@@ -1,10 +1,11 @@
+import './lockdown.js';
+
 import { h, Component, render } from './vendor/preact.module.js';
 import { useState, useEffect } from './vendor/hooks.module.js';
 import Router, { route } from './vendor/router.module.js';
 import htm from './vendor/htm.module.js';
 import {reaction, makeObservable, observable} from './vendor/mobx.module.js';
 
-import './debug.js';
 import State from './state.js';
 
 // Initialize htm with Preact
@@ -100,11 +101,11 @@ function Logout(props) {
 function App (props) {
   const state = new State();
 
+  //<img src="qrcode://?text=Hello+world" />
+
   return html`
     <main>
-      <div class="debug"></div>
       <${Header} state=${state} />
-      <img src="qrcode://?text=Hello+world" />
       <${Router}>
         <${Home} path="/" state=${state} />
         <${Signup} path="/signup" state=${state} />

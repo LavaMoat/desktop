@@ -32,12 +32,13 @@ async-trait = "0.1"
 hex = "0.4"
 home = "0.5.3"
 bip39 = { version = "1", features = ["rand"] }
-rand = "0.8.4"
+rand = "0.8"
 eth-keystore = "0.3"
 reqwest = "0.11"
 tinyfiledialogs = "3.9"
 qrcode = "0.12"
 image = "0.23"
+totp-rs = "0.7.3"
 
 [dependencies.oxide-auth]
 version = "0.5.1"

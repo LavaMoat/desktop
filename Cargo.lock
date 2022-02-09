@@ -401,6 +401,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349a06037c7bf932dd7e7d1f653678b2038b9ad46a74102f1fc7bd7872678cce"
 
 [[package]]
+name = "base32"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23ce669cd6c8588f79e15cf450314f9638f967fc5770ff1c7c1deb0925ea7cfa"
+
+[[package]]
 name = "base58"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -841,7 +847,7 @@ dependencies = [
  "bs58",
  "coins-core",
  "digest 0.9.0",
- "hmac",
+ "hmac 0.11.0",
  "k256",
  "lazy_static",
  "serde",
@@ -859,7 +865,7 @@ dependencies = [
  "coins-bip32",
  "getrandom",
  "hex",
- "hmac",
+ "hmac 0.11.0",
  "pbkdf2",
  "rand 0.8.4",
  "sha2 0.9.9",
@@ -1229,6 +1235,7 @@ dependencies = [
  "block-buffer 0.10.1",
  "crypto-common",
  "generic-array 0.14.5",
+ "subtle",
 ]
 
 [[package]]
@@ -1245,7 +1252,7 @@ checksum = "43ee23aa5b4f68c7a092b5c3beb25f50c406adc75e2363634f242f28ab255372"
 dependencies = [
  "der 0.4.5",
  "elliptic-curve 0.10.6",
- "hmac",
+ "hmac 0.11.0",
  "signature",
 ]
 
@@ -1318,7 +1325,7 @@ dependencies = [
  "ctr",
  "digest 0.9.0",
  "hex",
- "hmac",
+ "hmac 0.11.0",
  "pbkdf2",
  "rand 0.8.4",
  "scrypt",
@@ -2161,6 +2168,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hmac"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddca131f3e7f2ce2df364b57949a9d47915cfbd35e46cfee355ccebbf794d6a2"
+dependencies = [
+ "digest 0.10.1",
+]
+
+[[package]]
 name = "home"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2610,6 +2626,7 @@ dependencies = [
  "serde_json",
  "tinyfiledialogs",
  "tokio",
+ "totp-rs",
  "url",
  "wry",
 ]
@@ -2946,7 +2963,7 @@ source = "git+https://github.com/tmpfs/oxide-auth?branch=actix-4.x#7e1b8563bce66
 dependencies = [
  "base64 0.13.0",
  "chrono",
- "hmac",
+ "hmac 0.11.0",
  "once_cell",
  "rand 0.8.4",
  "rmp-serde",
@@ -3073,7 +3090,7 @@ checksum = "d95f5254224e617595d2cc3cc73ff0a5eaf2637519e25f03388154e9378b6ffa"
 dependencies = [
  "base64ct",
  "crypto-mac 0.11.1",
- "hmac",
+ "hmac 0.11.0",
  "password-hash",
  "sha2 0.9.9",
 ]
@@ -3758,7 +3775,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879588d8f90906e73302547e20fffefdd240eb3e0e744e142321f5d49dea0518"
 dependencies = [
  "base64ct",
- "hmac",
+ "hmac 0.11.0",
  "password-hash",
  "pbkdf2",
  "salsa20",
@@ -3919,6 +3936,17 @@ dependencies = [
  "digest 0.9.0",
  "opaque-debug 0.3.0",
  "sha2-asm",
+]
+
+[[package]]
+name = "sha2"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99c3bd8169c58782adad9290a9af5939994036b76187f7b4f0e6de91dbbfc0ec"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest 0.10.1",
 ]
 
 [[package]]
@@ -4366,6 +4394,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a31142970826733df8241ef35dc040ef98c679ab14d7c3e54d827099b3acecaa"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "totp-rs"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e160ae928ed3ed45f89e79183831abcc6822c7ac58fb7b3f275d77004157ea8"
+dependencies = [
+ "base32",
+ "hmac 0.12.0",
+ "sha-1",
+ "sha2 0.10.1",
 ]
 
 [[package]]

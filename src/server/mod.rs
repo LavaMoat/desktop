@@ -18,7 +18,17 @@ pub async fn server<A: ToSocketAddrs>(
     addr: A,
     bind: oneshot::Sender<Option<SocketAddr>>,
 ) -> Result<()> {
-    let pkce_agent = oauth::PkceSetup::new().start();
+    // Setup the Oauth2 PKCE configuration
+    let mut pkce_setup = oauth::PkceSetup::new();
+
+    pkce_setup.register_client(
+        "LocalClient",
+        "http://localhost:7778/".parse::<url::Url>()?,
+        "default-scope"
+    );
+
+    // Start the actor
+    let pkce_agent = pkce_setup.start();
 
     let server = HttpServer::new(move || {
         let origins = vec![

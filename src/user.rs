@@ -1,4 +1,6 @@
 //! Encapsulates user private data and settings.
+
+// https://chainid.network/chains.json
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::RwLock;
@@ -239,4 +241,3 @@ impl User {
     }
 }
 
-// https://chainid.network/chains.json
