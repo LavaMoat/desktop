@@ -26,6 +26,7 @@ use account::AccountBuilder;
 
 const ACCOUNTS: &str = "accounts.json";
 const KEYSTORE: &str = "keystore";
+const TOTP: &str = "totp";
 
 type UUID = String;
 type Address = String;
@@ -53,13 +54,6 @@ pub struct AccountView {
 pub struct UserData {
     /// Map account UUID to public address.
     accounts: HashMap<UUID, AccountView>,
-}
-
-#[deprecated]
-#[derive(Serialize, Deserialize)]
-pub struct Signup {
-    address: Address,
-    mnemonic: String,
 }
 
 pub struct User<W>
@@ -130,13 +124,26 @@ where
             .ok_or_else(|| anyhow!("could not determine home directory"))?;
 
         // FIXME: OS-specific locations!
-        let storage = base.join("Library").join("MetaMask");
-        Ok(storage)
+        let file = base.join("Library").join("MetaMask");
+        if !file.is_dir() {
+            std::fs::create_dir_all(&file)?;
+        }
+
+        Ok(file)
     }
 
-    // Get the keystore folder
+    // Get the keystore folder.
     fn keystore(&self) -> Result<PathBuf> {
         let file = self.storage()?.join(KEYSTORE);
+        if !file.is_dir() {
+            std::fs::create_dir_all(&file)?;
+        }
+        Ok(file)
+    }
+
+    // Get the TOTP 2FA folder.
+    fn totp(&self) -> Result<PathBuf> {
+        let file = self.storage()?.join(TOTP);
         if !file.is_dir() {
             std::fs::create_dir_all(&file)?;
         }
@@ -150,6 +157,10 @@ where
 
     /// Initialize the account builder.
     pub fn signup_start(&mut self) -> Result<()> {
+        if self.user_data.is_some() && self.exists()? {
+            bail!("cannot signup with existing primary account");
+        }
+
         self.account_builder = Some(AccountBuilder::<W>::new());
         Ok(())
     }
@@ -190,6 +201,21 @@ where
         Ok(account_builder.verify(token)?)
     }
 
+    /// Complete the signup process by writing files to disc.
+    pub fn signup_build(&mut self) -> Result<()> {
+        let keystore = self.keystore()?;
+        let totp = self.totp()?;
+        let account_builder = self
+            .account_builder
+            .as_mut()
+            .ok_or_else(|| anyhow!("account signup has not been started"))?;
+        let (address, uuid, totp_uuid) = account_builder.build(&keystore, &totp)?;
+
+        // TODO: setup account.json!
+
+        Ok(())
+    }
+
     /// Finish signup, zeroizing in-memory signup data.
     ///
     /// This should be called if aborting a signup process or
@@ -203,22 +229,6 @@ where
         }
         self.account_builder = None;
         Ok(())
-    }
-
-    #[deprecated]
-    /// Create a new account for this user on disc.
-    pub fn signup(&mut self, passphrase: &str) -> Result<Signup> {
-        if self.exists()? {
-            bail!("cannot signup with existing primary account");
-        }
-
-        // Generate a mnemonic for the account seed recovery
-        let mnemonic = words(Default::default())?;
-
-        // Go through the recovery flow
-        let address = self.recover(&mnemonic, passphrase, true)?;
-
-        Ok(Signup { address, mnemonic })
     }
 
     #[deprecated]

@@ -17,12 +17,6 @@ pub(crate) struct Totp {
     secret: String,
 }
 
-pub(crate) struct NewAccount {
-    address: String,
-    uuid: String,
-    totp_uuid: String,
-}
-
 #[derive(Zeroize)]
 pub(crate) struct AccountBuilder<W>
 where
@@ -71,7 +65,11 @@ where
         // 256 bits of entropy for the TOTP secret
         let secret_bytes = thread_rng().gen::<[u8; 32]>();
         let secret = hex::encode(&secret_bytes);
+
+        println!("Generate TOTP with secret {}", secret);
+
         let totp = Self::new_totp(&secret);
+
         let url = totp.get_url("metamask", "metamask.io");
         self.totp = Some(Totp { secret, url });
         Ok(&self.totp.as_ref().unwrap().url)
@@ -83,11 +81,25 @@ where
             .totp
             .as_ref()
             .ok_or_else(|| anyhow!("cannot verify, totp not set yet"))?;
+
         let time = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?
             .as_secs();
+
+        println!("Verify token {}", token);
+        println!("Verify time {}", time);
+        println!("Verify secret {}", &data.secret);
+
         let totp = Self::new_totp(&data.secret);
-        Ok(totp.check(token, time))
+
+        let generated = totp.generate(time);
+        println!("Generated token is: {}", generated);
+        println!("Generated token valid: {}", totp.check(&generated, time));
+
+        let checked = totp.check(token, time);
+        println!("User token valid: {}", checked);
+
+        Ok(checked)
     }
 
     fn new_totp<T: AsRef<[u8]>>(secret: T) -> TOTP<T> {
@@ -136,7 +148,9 @@ where
     }
 
     // Create a new account by writing the files to disc.
-    pub fn build(&self, keystore_dir: &PathBuf) -> Result<NewAccount> {
+    pub fn build(&self,
+        keystore_dir: &PathBuf,
+        totp_dir: &PathBuf) -> Result<(String, String, String)> {
         let passphrase = self
             .passphrase
             .as_ref()
@@ -151,15 +165,14 @@ where
             .ok_or_else(|| anyhow!("totp is not configured"))?;
 
         let totp_uuid =
-            self.write_totp_wallet(keystore_dir, passphrase, totp)?;
-
+            self.write_totp_wallet(totp_dir, passphrase, totp)?;
         let (address, uuid) =
             self.write_primary_wallet(keystore_dir, passphrase, mnemonic)?;
 
-        Ok(NewAccount {
+        Ok((
             address,
             uuid,
             totp_uuid,
-        })
+        ))
     }
 }

@@ -26,13 +26,6 @@ impl Service for IpcService {
                 let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }
-            "Account.signup" => {
-                let mut user = USER_DATA.write().unwrap();
-                let passphrase: String = request.deserialize()?;
-                let result = user.signup(&passphrase).map_err(Box::from)?;
-                let value = serde_json::to_value(result).map_err(Box::from)?;
-                Some((request, value).into())
-            }
             "Account.recover" => {
                 let mut user = USER_DATA.write().unwrap();
                 let (mnemonic, passphrase, is_primary): (String, String, bool) =
@@ -88,9 +81,15 @@ impl Service for IpcService {
                 Some((request, value).into())
             }
             "Signup.verify" => {
-                let user = USER_DATA.write().unwrap();
+                let user = USER_DATA.read().unwrap();
                 let token: String = request.deserialize()?;
                 let result = user.signup_verify(&token).map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
+            "Signup.build" => {
+                let mut user = USER_DATA.write().unwrap();
+                let result = user.signup_build().map_err(Box::from)?;
                 let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }

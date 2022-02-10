@@ -83,6 +83,9 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
                 .collect::<_>();
 
             if let Some(value) = query.get("text") {
+
+                println!("Render QR code {}", value);
+
                 // Encode some data into bits.
                 let code = QrCode::new(value.as_bytes()).unwrap();
                 // Render the bits into an image.
