@@ -72,7 +72,7 @@ where
         let secret_bytes = thread_rng().gen::<[u8; 32]>();
         let secret = hex::encode(&secret_bytes);
         let totp = Self::new_totp(&secret);
-        let url = totp.get_url("", "metamask.io");
+        let url = totp.get_url("metamask", "metamask.io");
         self.totp = Some(Totp { secret, url });
         Ok(&self.totp.as_ref().unwrap().url)
     }

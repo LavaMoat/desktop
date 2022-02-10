@@ -10,3 +10,18 @@ header, main {
 pre {
   white-space: pre-wrap;
 }
+
+/*
+ * Fix for bug on Macos Monterrey.
+ *
+ * SEE: https://github.com/tauri-apps/wry/issues/492
+ * SEE: https://github.com/tauri-apps/tauri/issues/2934
+ * SEE: https://bugs.webkit.org/show_bug.cgi?id=234699
+ **/
+img {
+  pointer-events: none;
+}
+
+.qrcode {
+  width: 280px;
+}

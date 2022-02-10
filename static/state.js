@@ -54,6 +54,10 @@ class IpcProxy {
     this._send(request);
     return Promise.resolve();
   }
+
+  open(url) {
+    this.notify("Browser.open", url);
+  }
 }
 
 export default class State {

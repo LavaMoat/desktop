@@ -13,6 +13,13 @@ impl Service for IpcService {
         _ctx: &Self::Data,
     ) -> Result<Option<Response>> {
         let response = match request.method() {
+            "Browser.open" => {
+                let user = USER_DATA.read().unwrap();
+                let url: String = request.deserialize()?;
+                let _ = open::that(url).map_err(Box::from)?;
+                //let value = serde_json::to_value(result).map_err(Box::from)?;
+                None
+            }
             "Account.exists" => {
                 let user = USER_DATA.read().unwrap();
                 let result = user.exists().map_err(Box::from)?;

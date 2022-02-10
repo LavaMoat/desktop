@@ -2,10 +2,7 @@ import { h, Component, render } from '../vendor/preact.module.js';
 import Router, { route } from '../vendor/router.module.js';
 import { useEffect, useState } from '../vendor/hooks.module.js';
 import htm from '../vendor/htm.module.js';
-//import {reaction} from './vendor/mobx.module.js';
-
-//import State from './state.js';
-//import Signup from './views/signup.js';
+//import {reaction} from '../vendor/mobx.module.js';
 
 // Initialize htm with Preact
 const html = htm.bind(h);
@@ -19,18 +16,42 @@ export function Verify(props) {
 }
 
 export function Totp(props) {
+  const {ipc} = props.state;
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    const run = async () => {
+      const url = await ipc.call("Signup.totp");
+      setUrl(url);
+    };
+    run();
+  }, []);
+
+  const open = async (e, url) => {
+    e.preventDefault();
+    await ipc.open(url);
+  }
+
+  if(url === null) {
+    return null;
+  }
+
   return html`
     <div>
       <h3>Two-factor Authentication (2FA)</h3>
+      <p>Use a TOTP enabled app such as <a href="#" onClick=${(e) => open(e, "https://authy.com")}>Authy</a>, <a href="#" onClick=${(e) => open(e, "https://googleauthenticator.net/")}>Google Authenticator</a> or <a href="#" onClick=${(e) => open(e, "https://www.microsoft.com/en-us/security/mobile-authenticator-app")}>Microsoft Authenticator</a> to protect your account.</p>
+      <p>Once you have an app installed on your phone scan this QR code to setup two-factor authentication.</p>
+      <div>
+        <img alt="QR Code" class="qrcode" src="qrcode://?text=${encodeURIComponent(url)}" />
+      </div>
       <a href="/signup/verify">Next: Verify 2FA</a>
     </div>
   `;
 }
 
 export function Recovery(props) {
-
-  const [mnemonic, setMnemonic] = useState(null);
   const {ipc} = props.state;
+  const [mnemonic, setMnemonic] = useState(null);
 
   useEffect(() => {
     const run = async () => {
@@ -59,8 +80,8 @@ export function Recovery(props) {
 }
 
 export function Passphrase(props) {
-  const [passphrase, setPassphrase] = useState(null);
   const {ipc} = props.state;
+  const [passphrase, setPassphrase] = useState(null);
 
   useEffect(() => {
     const run = async () => {
@@ -107,6 +128,8 @@ export class Signup {
   componentDidMount() {
     const {ipc} = this.props.state;
     const start = async () => {
+      // Start the signup process to
+      // create the account builder
       await ipc.call("Signup.start");
     }
     start();
