@@ -3,6 +3,7 @@ use eth_keystore::encrypt_key;
 use ethers::prelude::*;
 use ethers::signers::{coins_bip39::Wordlist, LocalWallet, MnemonicBuilder};
 use rand::thread_rng;
+use rand::Rng;
 use std::path::PathBuf;
 use totp_rs::{Algorithm, TOTP};
 use zeroize::ZeroizeOnDrop;
@@ -12,9 +13,7 @@ use crate::helpers::{bip39::*, format_address};
 #[derive(ZeroizeOnDrop)]
 pub(crate) struct Totp {
     url: String,
-    // FIXME: how to zeroize LocalWallet too?
-    #[zeroize(skip)]
-    wallet: LocalWallet,
+    secret: String,
 }
 
 pub(crate) struct NewAccount {
@@ -23,14 +22,14 @@ pub(crate) struct NewAccount {
     totp_uuid: String,
 }
 
-#[derive(Default, ZeroizeOnDrop)]
+#[derive(ZeroizeOnDrop)]
 pub(crate) struct AccountBuilder<W>
 where
     W: Wordlist,
 {
-    passphrase: Option<String>,
-    mnemonic: Option<String>,
-    totp: Option<Totp>,
+    pub(super) passphrase: Option<String>,
+    pub(super) mnemonic: Option<String>,
+    pub(super) totp: Option<Totp>,
     #[zeroize(skip)]
     marker: std::marker::PhantomData<W>,
 }
@@ -39,18 +38,27 @@ impl<W> AccountBuilder<W>
 where
     W: Wordlist,
 {
+    pub fn new() -> Self {
+        Self {
+            passphrase: None,
+            mnemonic: None,
+            totp: None,
+            marker: std::marker::PhantomData,
+        }
+    }
+
     /// Generate the login passphrase.
-    pub fn passphrase(mut self) -> Result<Self> {
+    pub fn passphrase(&mut self) -> Result<&str> {
         let passphrase = words(WordCount::short())?;
         self.passphrase = Some(passphrase);
-        Ok(self)
+        Ok(self.passphrase.as_ref().unwrap())
     }
 
     /// Generate the recovery seed mnemonic.
-    pub fn mnemonic(mut self) -> Result<Self> {
+    pub fn mnemonic(&mut self) -> Result<&str> {
         let mnemonic = words(WordCount::long())?;
         self.mnemonic = Some(mnemonic);
-        Ok(self)
+        Ok(self.mnemonic.as_ref().unwrap())
     }
 
     /// Generate the TOTP secret and URL.
@@ -59,14 +67,11 @@ where
     /// TOTP secret using the login passphrase to protect
     /// the secret on disc.
     pub fn totp(mut self) -> Result<Self> {
-        let wallet =
-            MnemonicBuilder::<W>::default().build_random(&mut thread_rng())?;
-
-        let private_key = wallet.signer().to_bytes().to_vec();
-        let secret = hex::encode(&private_key);
+        let secret_bytes = thread_rng().gen::<[u8; 32]>();
+        let secret = hex::encode(&secret_bytes);
         let totp = TOTP::new(Algorithm::SHA512, 6, 1, 30, &secret);
         let url = totp.get_url("", "metamask.io");
-        self.totp = Some(Totp { wallet, url });
+        self.totp = Some(Totp { secret, url });
         Ok(self)
     }
 
@@ -76,13 +81,13 @@ where
         passphrase: &str,
         totp: &Totp,
     ) -> Result<String> {
-        let mut rng = thread_rng();
-        let private_key = totp.wallet.signer().to_bytes().to_vec();
-
         // Write the TOTP private key to disc
-        let uuid =
-            encrypt_key(keystore_dir, &mut rng, &private_key, passphrase)?;
-
+        let uuid = encrypt_key(
+            keystore_dir,
+            &mut thread_rng(),
+            &totp.secret,
+            passphrase,
+        )?;
         Ok(uuid)
     }
 

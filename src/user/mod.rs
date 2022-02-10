@@ -11,12 +11,17 @@ use serde::{Deserialize, Serialize};
 
 use eth_keystore::encrypt_key;
 use ethers::prelude::*;
-use ethers::signers::{coins_bip39::{English, Wordlist}, MnemonicBuilder};
+use ethers::signers::{
+    coins_bip39::{English, Wordlist},
+    MnemonicBuilder,
+};
 use tinyfiledialogs::password_box;
 
 use crate::helpers::{bip39::words, format_address};
 
 mod account;
+
+use account::AccountBuilder;
 
 const ACCOUNTS: &str = "accounts.json";
 const KEYSTORE: &str = "keystore";
@@ -49,28 +54,37 @@ pub struct UserData {
     accounts: HashMap<UUID, AccountView>,
 }
 
+#[deprecated]
 #[derive(Serialize, Deserialize)]
 pub struct Signup {
     address: Address,
     mnemonic: String,
 }
 
-#[derive(Debug)]
-pub struct User<W> where W: Wordlist {
+pub struct User<W>
+where
+    W: Wordlist,
+{
+    /// User data is available after authentication.
     user_data: Option<UserData>,
-    language: W,
+    /// Account builder is available during the signup process.
+    account_builder: Option<AccountBuilder<W>>,
 }
 
 impl Default for User<English> {
     fn default() -> Self {
         Self {
             user_data: None,
-            language: English,
+            //language: English,
+            account_builder: None,
         }
     }
 }
 
-impl<W> User<W> where W: Wordlist {
+impl<W> User<W>
+where
+    W: Wordlist,
+{
     /// Save the user data to disc.
     fn save(&mut self) -> Result<()> {
         let file = self.storage()?.join(ACCOUNTS);
@@ -133,6 +147,40 @@ impl<W> User<W> where W: Wordlist {
         self.primary().map(|o| o.is_some())
     }
 
+    /// Initialize the account builder.
+    pub fn signup_start(&mut self) -> Result<()> {
+        self.account_builder = Some(AccountBuilder::<W>::new());
+        Ok(())
+    }
+
+    /// Generate the authentication passphrase for the new account.
+    pub fn signup_passphrase(&mut self) -> Result<&str> {
+        let mut account_builder = self
+            .account_builder
+            .as_mut()
+            .ok_or_else(|| anyhow!("account signup has not been started"))?;
+        Ok(account_builder.passphrase()?)
+    }
+
+    /// Generate the seed recovery mnemonic for the new account.
+    pub fn signup_mnemonic(&mut self) -> Result<&str> {
+        let account_builder = self
+            .account_builder
+            .as_mut()
+            .ok_or_else(|| anyhow!("account signup has not been started"))?;
+        Ok(account_builder.mnemonic()?)
+    }
+
+    /// Generate the TOTP secret and URL for the new account.
+    pub fn signup_totp(&mut self) -> Result<()> {
+        let account_builder = self
+            .account_builder
+            .take()
+            .ok_or_else(|| anyhow!("account signup has not been started"))?;
+        Ok(())
+    }
+
+    #[deprecated]
     /// Create a new account for this user on disc.
     pub fn signup(&mut self, passphrase: &str) -> Result<Signup> {
         if self.exists()? {
@@ -148,6 +196,7 @@ impl<W> User<W> where W: Wordlist {
         Ok(Signup { address, mnemonic })
     }
 
+    #[deprecated]
     /// Recover a private key from a seed phrase mnemonic.
     pub fn recover(
         &mut self,

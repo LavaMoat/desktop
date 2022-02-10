@@ -24,6 +24,10 @@ As an additional precaution a simple `lockdown.js` file prevents use of the `fet
 
 Applications that connect to the Metamask *desktop agent* should take precautions to prevent supply chain attacks by using [LavaMoat][].
 
+### Secrets
+
+Private keys are stored on disc using the [Web3 Secret Storage Definition][].
+
 ## Build
 
 Install a patched version of [cargo-bundle][]:
@@ -50,3 +54,4 @@ make release-macos-x86_64
 [preact]: https://preactjs.com/
 [htm]: https://github.com/developit/htm
 [LavaMoat]: https://github.com/LavaMoat/LavaMoat
+[Web3 Secret Storage Definition]: https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
