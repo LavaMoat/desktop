@@ -7,19 +7,10 @@ import htm from './vendor/htm.module.js';
 import {reaction, makeObservable, observable} from './vendor/mobx.module.js';
 
 import State from './state.js';
+import {Signup} from './views/signup.js';
 
 // Initialize htm with Preact
 const html = htm.bind(h);
-
-function Signup(props) {
-  return html`
-    <div>
-      <h3>Signup</h3>
-      <input type="password" />
-      <button>Create an account</button>
-    </div>
-  `;
-}
 
 function Dashboard(props) {
   const [accounts, setAccounts] = useState(props.state.accounts);
@@ -108,7 +99,9 @@ function App (props) {
       <${Header} state=${state} />
       <${Router}>
         <${Home} path="/" state=${state} />
-        <${Signup} path="/signup" state=${state} />
+
+        <${Signup} path="/signup/:rest*" state=${state} />
+
         <${Logout} path="/logout" state=${state} />
         <${Dashboard} path="/dashboard" state=${state} />
       <//>

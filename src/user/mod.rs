@@ -8,6 +8,7 @@ use std::sync::RwLock;
 use anyhow::{anyhow, bail, Result};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
 use eth_keystore::encrypt_key;
 use ethers::prelude::*;
@@ -155,7 +156,7 @@ where
 
     /// Generate the authentication passphrase for the new account.
     pub fn signup_passphrase(&mut self) -> Result<&str> {
-        let mut account_builder = self
+        let account_builder = self
             .account_builder
             .as_mut()
             .ok_or_else(|| anyhow!("account signup has not been started"))?;
@@ -172,11 +173,35 @@ where
     }
 
     /// Generate the TOTP secret and URL for the new account.
-    pub fn signup_totp(&mut self) -> Result<()> {
+    pub fn signup_totp(&mut self) -> Result<&str> {
         let account_builder = self
             .account_builder
-            .take()
+            .as_mut()
             .ok_or_else(|| anyhow!("account signup has not been started"))?;
+        Ok(account_builder.totp()?)
+    }
+
+    /// Verify the TOTP 2FA for account signup.
+    pub fn signup_verify(&self, token: &str) -> Result<bool> {
+        let account_builder = self
+            .account_builder
+            .as_ref()
+            .ok_or_else(|| anyhow!("account signup has not been started"))?;
+        Ok(account_builder.verify(token)?)
+    }
+
+    /// Finish signup, zeroizing in-memory signup data.
+    ///
+    /// This should be called if aborting a signup process or
+    /// when the signup process is completed.
+    ///
+    /// Whilst this function is infallible we use the usual
+    /// fallible signature for consistency.
+    pub fn signup_finish(&mut self) -> Result<()> {
+        if let Some(mut builder) = self.account_builder.take() {
+            builder.zeroize();
+        }
+        self.account_builder = None;
         Ok(())
     }
 

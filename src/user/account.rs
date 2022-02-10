@@ -5,12 +5,13 @@ use ethers::signers::{coins_bip39::Wordlist, LocalWallet, MnemonicBuilder};
 use rand::thread_rng;
 use rand::Rng;
 use std::path::PathBuf;
+use std::time::SystemTime;
 use totp_rs::{Algorithm, TOTP};
-use zeroize::ZeroizeOnDrop;
+use zeroize::Zeroize;
 
 use crate::helpers::{bip39::*, format_address};
 
-#[derive(ZeroizeOnDrop)]
+#[derive(Zeroize)]
 pub(crate) struct Totp {
     url: String,
     secret: String,
@@ -22,7 +23,7 @@ pub(crate) struct NewAccount {
     totp_uuid: String,
 }
 
-#[derive(ZeroizeOnDrop)]
+#[derive(Zeroize)]
 pub(crate) struct AccountBuilder<W>
 where
     W: Wordlist,
@@ -66,13 +67,31 @@ where
     /// We use a local wallet so that we can encrypt the
     /// TOTP secret using the login passphrase to protect
     /// the secret on disc.
-    pub fn totp(mut self) -> Result<Self> {
+    pub fn totp(&mut self) -> Result<&str> {
+        // 256 bits of entropy for the TOTP secret
         let secret_bytes = thread_rng().gen::<[u8; 32]>();
         let secret = hex::encode(&secret_bytes);
-        let totp = TOTP::new(Algorithm::SHA512, 6, 1, 30, &secret);
+        let totp = Self::new_totp(&secret);
         let url = totp.get_url("", "metamask.io");
         self.totp = Some(Totp { secret, url });
-        Ok(self)
+        Ok(&self.totp.as_ref().unwrap().url)
+    }
+
+    /// Verify a TOTP token.
+    pub fn verify(&self, token: &str) -> Result<bool> {
+        let data = self
+            .totp
+            .as_ref()
+            .ok_or_else(|| anyhow!("cannot verify, totp not set yet"))?;
+        let time = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let totp = Self::new_totp(&data.secret);
+        Ok(totp.check(token, time))
+    }
+
+    fn new_totp<T: AsRef<[u8]>>(secret: T) -> TOTP<T> {
+        TOTP::new(Algorithm::SHA256, 6, 1, 30, secret)
     }
 
     fn write_totp_wallet(

@@ -48,24 +48,49 @@ impl Service for IpcService {
                 let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }
+            "Account.list" => {
+                let user = USER_DATA.read().unwrap();
+                let accounts = user.list_accounts().map_err(Box::from)?;
+                let value =
+                    serde_json::to_value(accounts).map_err(Box::from)?;
+                Some((request, value).into())
+            }
+            // SIGNUP
             "Signup.start" => {
                 let mut user = USER_DATA.write().unwrap();
                 let result = user.signup_start().map_err(Box::from)?;
                 let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }
-            /*
-            "Account.create" => {
+            "Signup.passphrase" => {
                 let mut user = USER_DATA.write().unwrap();
-                let address = user.create_account().map_err(Box::from)?;
-                Some((request, Value::String(address)).into())
+                let result = user.signup_passphrase().map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
             }
-            */
-            "Account.list" => {
-                let user = USER_DATA.read().unwrap();
-                let accounts = user.list_accounts().map_err(Box::from)?;
-                let value =
-                    serde_json::to_value(accounts).map_err(Box::from)?;
+            "Signup.mnemonic" => {
+                let mut user = USER_DATA.write().unwrap();
+                let result = user.signup_mnemonic().map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
+            "Signup.totp" => {
+                let mut user = USER_DATA.write().unwrap();
+                let result = user.signup_totp().map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
+            "Signup.verify" => {
+                let user = USER_DATA.write().unwrap();
+                let token: String = request.deserialize()?;
+                let result = user.signup_verify(&token).map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
+                Some((request, value).into())
+            }
+            "Signup.finish" => {
+                let mut user = USER_DATA.write().unwrap();
+                let result = user.signup_finish().map_err(Box::from)?;
+                let value = serde_json::to_value(result).map_err(Box::from)?;
                 Some((request, value).into())
             }
             _ => None,

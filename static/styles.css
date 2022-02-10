@@ -6,3 +6,7 @@ body {
 header, main {
   padding: 10px;
 }
+
+pre {
+  white-space: pre-wrap;
+}
