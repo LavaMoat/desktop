@@ -10,18 +10,25 @@ const html = htm.bind(h);
 import TwoFactorCode from '../components/two-factor-code.js';
 
 export function Verify(props) {
+  const [verifying, setVerifying] = useState(false);
   const {ipc} = props.state;
 
   const verify = async (token) => {
+    // Guard against re-entrancy
+    if (verifying) {
+      return true;
+    }
+
+    setVerifying(true);
     console.log("Verify with token", token);
     const result = await ipc.call("Signup.verify", token);
     if (result) {
       console.log("Calling build to complete the signup...");
       const account = await ipc.call("Signup.build");
       props.state.primaryAccount = account;
-      //route("/dashboard");
-      console.log("TODO: route to the deshboard");
+      route("/dashboard");
     }
+    setVerifying(false);
   }
 
   return html`

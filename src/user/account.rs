@@ -1,4 +1,5 @@
-use anyhow::{anyhow, Result};
+//! Account builder for creating a new account.
+use anyhow::{anyhow, bail, Result};
 use eth_keystore::encrypt_key;
 use ethers::prelude::*;
 use ethers::signers::{coins_bip39::Wordlist, LocalWallet, MnemonicBuilder};
@@ -25,6 +26,7 @@ where
     pub(super) passphrase: Option<String>,
     pub(super) mnemonic: Option<String>,
     pub(super) totp: Option<Totp>,
+    done: bool,
     #[zeroize(skip)]
     marker: std::marker::PhantomData<W>,
 }
@@ -38,6 +40,7 @@ where
             passphrase: None,
             mnemonic: None,
             totp: None,
+            done: false,
             marker: std::marker::PhantomData,
         }
     }
@@ -132,9 +135,14 @@ where
     }
 
     // Create a new account by writing the files to disc.
-    pub fn build(&self,
+    pub fn build(&mut self,
         keystore_dir: &PathBuf,
         totp_dir: &PathBuf) -> Result<(String, String, String)> {
+
+        if self.done {
+            bail!("account creation is done");
+        }
+
         let passphrase = self
             .passphrase
             .as_ref()
@@ -152,6 +160,8 @@ where
             self.write_totp_wallet(totp_dir, passphrase, totp)?;
         let (address, uuid) =
             self.write_primary_wallet(keystore_dir, passphrase, mnemonic)?;
+
+        self.done = true;
 
         Ok((
             address,

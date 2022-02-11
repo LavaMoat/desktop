@@ -70,7 +70,6 @@ impl Default for User<English> {
     fn default() -> Self {
         Self {
             user_data: None,
-            //language: English,
             account_builder: None,
         }
     }
