@@ -20,10 +20,10 @@ export function Verify(props) {
     e.preventDefault();
     console.log("Verify with token", token);
     const result = await ipc.call("Signup.verify", token);
-    console.log("Got verification result", result);
     if (result) {
-      console.log("TODO: Build the signup files...");
-      console.log("TODO: redirect to the dashboard...");
+      const account = await ipc.call("Signup.build");
+      state.primaryAccount = account;
+      route("/dashboard");
     }
   }
 

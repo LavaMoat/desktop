@@ -86,24 +86,12 @@ where
             .duration_since(SystemTime::UNIX_EPOCH)?
             .as_secs();
 
-        println!("Verify token {}", token);
-        println!("Verify time {}", time);
-        println!("Verify secret {}", &data.secret);
-
         let totp = Self::new_totp(&data.secret);
-
-        let generated = totp.generate(time);
-        println!("Generated token is: {}", generated);
-        println!("Generated token valid: {}", totp.check(&generated, time));
-
-        let checked = totp.check(token, time);
-        println!("User token valid: {}", checked);
-
-        Ok(checked)
+        Ok(totp.check(token, time))
     }
 
     fn new_totp<T: AsRef<[u8]>>(secret: T) -> TOTP<T> {
-        TOTP::new(Algorithm::SHA256, 6, 1, 30, secret)
+        TOTP::new(Algorithm::SHA1, 6, 1, 30, secret)
     }
 
     fn write_totp_wallet(

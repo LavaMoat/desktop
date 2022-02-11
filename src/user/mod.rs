@@ -202,7 +202,7 @@ where
     }
 
     /// Complete the signup process by writing files to disc.
-    pub fn signup_build(&mut self) -> Result<()> {
+    pub fn signup_build(&mut self) -> Result<AccountView> {
         let keystore = self.keystore()?;
         let totp = self.totp()?;
         let account_builder = self
@@ -210,10 +210,18 @@ where
             .as_mut()
             .ok_or_else(|| anyhow!("account signup has not been started"))?;
         let (address, uuid, totp_uuid) = account_builder.build(&keystore, &totp)?;
+        // Write out the account information
+        let account = AccountView {
+            address,
+            kind: AccountKind::Primary,
+        };
 
-        // TODO: setup account.json!
+        let mut user_data: UserData = Default::default();
+        user_data.accounts.insert(uuid, account.clone());
+        self.user_data = Some(user_data);
+        self.save()?;
 
-        Ok(())
+        Ok(account)
     }
 
     /// Finish signup, zeroizing in-memory signup data.
