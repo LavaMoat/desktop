@@ -17,6 +17,9 @@ pre {
  * SEE: https://github.com/tauri-apps/wry/issues/492
  * SEE: https://github.com/tauri-apps/tauri/issues/2934
  * SEE: https://bugs.webkit.org/show_bug.cgi?id=234699
+ *
+ * Note that this bug does not appear when the executable is
+ * bundled in a .app package with CFBundleIdentifier.
  **/
 img {
   pointer-events: none;

@@ -41,6 +41,7 @@ image = "0.23"
 totp-rs = "0.7.3"
 zeroize = { version = "1.5", features = ["zeroize_derive"] }
 open = "2"
+chrono = "0.4"
 
 [dependencies.oxide-auth]
 version = "0.5.1"

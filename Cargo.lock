@@ -2601,6 +2601,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bip39",
+ "chrono",
  "clap",
  "ctrlc",
  "eth-keystore",

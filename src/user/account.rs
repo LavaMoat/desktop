@@ -65,11 +65,7 @@ where
         // 256 bits of entropy for the TOTP secret
         let secret_bytes = thread_rng().gen::<[u8; 32]>();
         let secret = hex::encode(&secret_bytes);
-
-        println!("Generate TOTP with secret {}", secret);
-
         let totp = Self::new_totp(&secret);
-
         let url = totp.get_url("metamask", "metamask.io");
         self.totp = Some(Totp { secret, url });
         Ok(&self.totp.as_ref().unwrap().url)
