@@ -1,7 +1,24 @@
+use anyhow::Result;
 use ethers::prelude::*;
+use chrono::{SecondsFormat, Utc};
+use k256::{
+    ecdsa::{Error, SigningKey},
+    elliptic_curve::sec1::ToEncodedPoint,
+    PublicKey,
+};
 
 pub fn format_address(address: H160) -> String {
     format!("0x{}", hex::encode(address.0))
+}
+
+/// Convert a public address to a `geth` style filename.
+pub fn address_to_filename<A>(address: A) -> String where A: AsRef<str> {
+    let timestamp = Utc::now();
+    format!(
+        "UTC--{}--{}",
+        timestamp.to_rfc3339_opts(SecondsFormat::Nanos, true),
+        hex::encode(address.as_ref()),
+    )
 }
 
 pub mod bip39 {
