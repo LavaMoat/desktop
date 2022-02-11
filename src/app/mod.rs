@@ -60,6 +60,15 @@ pub async fn window<S: AsRef<str>, T: AsRef<str>>(
     win_bar.add_native_item(MenuItem::Quit);
     menu_bar.add_submenu("Main", true, win_bar);
 
+    let mut edit_bar = MenuBar::new();
+    edit_bar.add_native_item(MenuItem::Undo);
+    edit_bar.add_native_item(MenuItem::Redo);
+    edit_bar.add_native_item(MenuItem::Cut);
+    edit_bar.add_native_item(MenuItem::Copy);
+    edit_bar.add_native_item(MenuItem::Paste);
+    edit_bar.add_native_item(MenuItem::SelectAll);
+    menu_bar.add_submenu("Edit", true, edit_bar);
+
     let window = WindowBuilder::new()
         .with_title(title.as_ref())
         .with_menu(menu_bar)

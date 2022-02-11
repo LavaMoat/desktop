@@ -1,11 +1,5 @@
-use anyhow::Result;
 use ethers::prelude::*;
 use chrono::{SecondsFormat, Utc};
-use k256::{
-    ecdsa::{Error, SigningKey},
-    elliptic_curve::sec1::ToEncodedPoint,
-    PublicKey,
-};
 
 pub fn format_address(address: H160) -> String {
     format!("0x{}", hex::encode(address.0))

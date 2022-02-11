@@ -7,7 +7,6 @@ use rand::thread_rng;
 use rand::Rng;
 use std::path::PathBuf;
 use std::time::SystemTime;
-use totp_rs::{Algorithm, TOTP};
 use zeroize::Zeroize;
 
 use crate::helpers::{bip39::*, format_address};
@@ -68,7 +67,7 @@ where
         // 256 bits of entropy for the TOTP secret
         let secret_bytes = thread_rng().gen::<[u8; 32]>();
         let secret = hex::encode(&secret_bytes);
-        let totp = Self::new_totp(&secret);
+        let totp = super::new_totp(&secret);
         let url = totp.get_url("metamask", "metamask.io");
         self.totp = Some(Totp { secret, url });
         Ok(&self.totp.as_ref().unwrap().url)
@@ -85,12 +84,8 @@ where
             .duration_since(SystemTime::UNIX_EPOCH)?
             .as_secs();
 
-        let totp = Self::new_totp(&data.secret);
+        let totp = super::new_totp(&data.secret);
         Ok(totp.check(token, time))
-    }
-
-    fn new_totp<T: AsRef<[u8]>>(secret: T) -> TOTP<T> {
-        TOTP::new(Algorithm::SHA1, 6, 1, 30, secret)
     }
 
     fn write_totp_wallet(

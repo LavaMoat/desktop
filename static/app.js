@@ -96,6 +96,7 @@ function App (props) {
 
   return html`
     <main>
+      <input type="text" />
       <${Header} state=${state} />
       <${Router}>
         <${Home} path="/" state=${state} />

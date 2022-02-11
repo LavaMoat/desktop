@@ -9,6 +9,8 @@ const html = htm.bind(h);
 
 import TwoFactorCode from '../components/two-factor-code.js';
 
+import {copyToClipboard} from '../helpers.js';
+
 export function Verify(props) {
   const [verifying, setVerifying] = useState(false);
   const {ipc} = props.state;
@@ -86,6 +88,11 @@ export function Recovery(props) {
     run();
   }, []);
 
+  const copy = async (e) => {
+    e.preventDefault();
+    await copyToClipboard(mnemonic);
+  }
+
   if(mnemonic === null) {
     return null;
   }
@@ -95,6 +102,7 @@ export function Recovery(props) {
       <h3>Recovery Seed</h3>
       <p>This is your <em>recovery seed phrase</em>:</p>
       <pre>${mnemonic}</pre>
+      <p><a href="#" onClick=${(e) => copy(e)}>Copy to clipboard</a></p>
       <p>If you lose your login passphrase you can recover
       your <em>primary account</em> using this seed recovery phrase so
       you should store it securely.</p>
@@ -116,6 +124,11 @@ export function Passphrase(props) {
     run();
   }, []);
 
+  const copy = async (e) => {
+    e.preventDefault();
+    await copyToClipboard(passphrase);
+  }
+
   if(passphrase === null) {
     return null;
   }
@@ -125,6 +138,7 @@ export function Passphrase(props) {
       <h3>Passphrase</h3>
       <p>This is your <em>login passphrase</em>:</p>
       <pre>${passphrase}</pre>
+      <p><a href="#" onClick=${(e) => copy(e)}>Copy to clipboard</a></p>
       <p>You must store this in a secure place such as a password manager.</p>
       <p>This is the passphrase you use to log in to the MetaMask Desktop application.</p>
       <a href="/signup/recovery">Next: Recovery Seed</a>
@@ -137,7 +151,7 @@ export function Welcome(props) {
       <div>
         <h3>Signup</h3>
         <p>Welcome to MetaMask!</p>
-        <p>We will guide you through the signup process:</p>
+        <p>We will guide you through the process to create a new account:</p>
         <ul>
           <li>Secure your login passphrase</li>
           <li>Secure your seed recovery phrase</li>

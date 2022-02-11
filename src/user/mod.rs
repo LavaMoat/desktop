@@ -9,6 +9,7 @@ use anyhow::{anyhow, bail, Result};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
+use totp_rs::{Algorithm, TOTP};
 
 use eth_keystore::encrypt_key;
 use ethers::prelude::*;
@@ -16,13 +17,14 @@ use ethers::signers::{
     coins_bip39::{English, Wordlist},
     MnemonicBuilder,
 };
-use tinyfiledialogs::password_box;
 
-use crate::helpers::{bip39::words, format_address};
+use crate::helpers::{format_address};
 
 mod account;
+mod login;
 
 use account::AccountBuilder;
+use login::authenticate;
 
 const ACCOUNTS: &str = "accounts.json";
 const KEYSTORE: &str = "keystore";
@@ -33,6 +35,11 @@ type Address = String;
 
 pub static USER_DATA: Lazy<RwLock<User<English>>> =
     Lazy::new(|| RwLock::new(Default::default()));
+
+/// Helper function to create a TOTP.
+pub(crate) fn new_totp<T: AsRef<[u8]>>(secret: T) -> TOTP<T> {
+    TOTP::new(Algorithm::SHA1, 6, 1, 30, secret)
+}
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
 pub enum AccountKind {
@@ -54,6 +61,8 @@ pub struct AccountView {
 pub struct UserData {
     /// Map account UUID to public address.
     accounts: HashMap<UUID, AccountView>,
+    /// Relative path to the TOTP secrets file.
+    totp: Option<PathBuf>,
 }
 
 pub struct User<W>
@@ -215,7 +224,12 @@ where
             kind: AccountKind::Primary,
         };
 
+        // Relative path to the TOTP secrets file
+        let totp_file = totp.join(totp_uuid);
+        let totp_file = totp_file.strip_prefix(self.storage()?)?;
+
         let mut user_data: UserData = Default::default();
+        user_data.totp = Some(totp_file.to_path_buf());
         user_data.accounts.insert(uuid, account.clone());
         self.user_data = Some(user_data);
         self.save()?;
@@ -251,7 +265,7 @@ where
             bail!("cannot recover, primary account already exists");
         }
 
-        let mut user_data = self
+        let user_data = self
             .user_data
             .as_mut()
             .ok_or_else(|| anyhow!("not logged in"))?;
@@ -289,38 +303,8 @@ where
     }
 
     /// Login to the user's account.
-    ///
-    /// Decrypts the primary keystore to verify the user can
-    /// access the account.
     pub fn login(&mut self) -> Result<Option<AccountView>> {
-        if let Some(passphrase) =
-            password_box("MetaMask", "Enter your account passphrase to login:")
-        {
-            // Use in-memory user data for login check
-            let user_data = self.load_user_data()?;
-            if let Some(user_data) = user_data {
-                let primary = user_data
-                    .accounts
-                    .iter()
-                    .find(|(_, v)| v.kind == AccountKind::Primary);
-                if let Some((uuid, account)) = primary {
-                    let path = self.storage()?.join(KEYSTORE).join(uuid);
-                    let _ = Wallet::decrypt_keystore(path, passphrase)?;
-
-                    // Store the user data in-memory as they
-                    // are now authenticated
-                    self.load()?;
-
-                    Ok(Some(account.clone()))
-                } else {
-                    bail!("cannot login without primary account");
-                }
-            } else {
-                bail!("cannot login without user data");
-            }
-        } else {
-            Ok(None)
-        }
+        authenticate(self)
     }
 
     /// Logout of the account.
