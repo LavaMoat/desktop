@@ -18,13 +18,8 @@ pub fn authenticate<W>(user: &mut User<W>) -> Result<Option<AccountView>> where 
     if let Some(passphrase) =
         password_box("MetaMask", "Enter your account passphrase:")
     {
-
-        println!("Got a passphrase {:#?}", passphrase);
-
         // Use in-memory user data for login check
         let user_data = user.load_user_data()?;
-
-        println!("Loading user data {:?}", user_data);
 
         if let Some(user_data) = user_data {
             let primary = user_data
@@ -34,8 +29,6 @@ pub fn authenticate<W>(user: &mut User<W>) -> Result<Option<AccountView>> where 
             if let Some((uuid, account)) = primary {
                 let primary_wallet = user.keystore()?.join(uuid);
                 let _ = Wallet::decrypt_keystore(primary_wallet, &passphrase)?;
-
-                println!("user data {:#?}", user_data);
 
                 if let Some(totp) = &user_data.totp {
 
