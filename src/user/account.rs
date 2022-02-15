@@ -1,8 +1,7 @@
 //! Account builder for creating a new account.
 use anyhow::{anyhow, bail, Result};
 use eth_keystore::encrypt_key;
-use ethers::prelude::*;
-use ethers::signers::{coins_bip39::Wordlist, LocalWallet, MnemonicBuilder};
+use ethers_signers::{coins_bip39::Wordlist, LocalWallet, MnemonicBuilder, Signer};
 use rand::thread_rng;
 use rand::Rng;
 use std::path::PathBuf;

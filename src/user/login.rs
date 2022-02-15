@@ -1,8 +1,7 @@
 use anyhow::{bail, Result};
 use std::time::SystemTime;
 
-use ethers::prelude::*;
-use ethers::signers::coins_bip39::Wordlist;
+use ethers_signers::{coins_bip39::Wordlist, Wallet};
 
 use tinyfiledialogs::{password_box, input_box};
 

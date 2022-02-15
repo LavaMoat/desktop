@@ -1,4 +1,4 @@
-use ethers::prelude::*;
+use ethers_core::types::H160;
 use chrono::{SecondsFormat, Utc};
 
 pub fn format_address(address: H160) -> String {

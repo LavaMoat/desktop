@@ -12,8 +12,8 @@ use zeroize::Zeroize;
 use totp_rs::{Algorithm, TOTP};
 
 use eth_keystore::encrypt_key;
-use ethers::prelude::*;
-use ethers::signers::{
+use ethers_signers::{
+    Signer,
     coins_bip39::{English, Wordlist},
     MnemonicBuilder,
 };
